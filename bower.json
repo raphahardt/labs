@@ -20,6 +20,7 @@
   "dependencies": {
     "blueimp-file-upload": "~9.5.7",
     "angular": "~1.2.16",
-    "jquery": "~2.1.0"
+    "jquery": "~2.1.0",
+    "angular-ui-sortable": "~0.12.5"
   }
 }

@@ -2,6 +2,7 @@
     "require": {
         "silex/silex": "~1.2",
         "knplabs/gaufrette": "*",
+        "symfony/filesystem": "*",
         "imagine/imagine": "*"
     }
 }

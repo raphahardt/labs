@@ -45,27 +45,23 @@
     <body>
 
         <div class="container">
-
             <!-- The file upload form used as target for the file upload widget -->
-            <form id="fileupload" action="upload/" method="POST" enctype="multipart/form-data" data-ng-app="demo" data-ng-controller="DemoFileUploadController" data-file-upload="options" data-ng-class="{'fileupload-processing': processing() || loadingFiles}">
+            <form id="fileupload" action="./upload" method="POST" enctype="multipart/form-data" ng-app="demo" ng-controller="DemoFileUploadController" file-upload="options" ng-class="{'fileupload-processing': processing() || loadingFiles}">
                 <!-- Redirect browsers with JavaScript disabled to the origin page -->
                 <noscript><input type="hidden" name="redirect" value="http://blueimp.github.io/jQuery-File-Upload/"></noscript>
                 <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
                 <div class="row fileupload-buttonbar">
                     <div class="col-lg-7">
                         <!-- The fileinput-button span is used to style the file input field as button -->
-                        <span class="btn btn-success fileinput-button" ng-class="{disabled: disabled}">
-                            <i class="glyphicon glyphicon-plus"></i>
-                            <span>Add files...</span>
+                        <span class="btn btn-default fileinput-button" ng-class="{disabled: disabled}">
+                            <span>add</span>
                             <input type="file" name="files[]" multiple ng-disabled="disabled">
                         </span>
-                        <button type="button" class="btn btn-primary start" data-ng-click="submit()">
-                            <i class="glyphicon glyphicon-upload"></i>
-                            <span>Start upload</span>
+                        <button type="button" class="btn btn-default start" ng-click="submit()">
+                            <span>start</span>
                         </button>
-                        <button type="button" class="btn btn-warning cancel" data-ng-click="cancel()">
-                            <i class="glyphicon glyphicon-ban-circle"></i>
-                            <span>Cancel upload</span>
+                        <button type="button" class="btn btn-default cancel" ng-click="cancel()">
+                            <span>cancel</span>
                         </button>
                         <!-- The global file processing state -->
                         <span class="fileupload-process"></span>
@@ -79,58 +75,59 @@
                     </div>
                 </div>
                 <!-- The table listing the files available for upload/download -->
-                <table class="table table-striped files ng-cloak">
-                    <tr data-ng-repeat="file in queue" data-ng-class="{'processing': file.$processing()}">
-                        <td data-ng-switch data-on="!!file.thumbnailUrl">
-                            <div class="preview" data-ng-switch-when="true">
-                                <a data-ng-href="{{file.url}}" title="{{file.name}}" download="{{file.name}}" data-gallery><img data-ng-src="{{file.thumbnailUrl}}" width="30" alt=""></a>
-                            </div>
-                            <div class="preview" data-ng-switch-default data-file-upload-preview="file"></div>
-                        </td>
-                        <td>
-                            <p class="name" data-ng-switch data-on="!!file.url">
-                                <span data-ng-switch-when="true" data-ng-switch data-on="!!file.thumbnailUrl">
-                                    <a data-ng-switch-when="true" data-ng-href="{{file.url}}" title="{{file.name}}" download="{{file.name}}" data-gallery>{{file.name}}</a>
-                                    <a data-ng-switch-default data-ng-href="{{file.url}}" title="{{file.name}}" download="{{file.name}}">{{file.name}}</a>
-                                </span>
-                                <span data-ng-switch-default>{{file.name}}</span>
-                            </p>
-                            <strong data-ng-show="file.error" class="error text-danger">{{file.error}}</strong>
-                        </td>
-                        <td>
-                            <p class="size">{{file.size| formatFileSize}}</p>
-                            <div class="progress progress-striped active fade" data-ng-class="{pending: 'in'}[file.$state()]" data-file-upload-progress="file.$progress()"><div class="progress-bar progress-bar-success" data-ng-style="{width: num + '%'}"></div></div>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-primary start" data-ng-click="file.$submit()" data-ng-hide="!file.$submit || options.autoUpload" data-ng-disabled="file.$state() == 'pending' || file.$state() == 'rejected'">
-                                <i class="glyphicon glyphicon-upload"></i>
-                                <span>Start</span>
-                            </button>
-                            <button type="button" class="btn btn-warning cancel" data-ng-click="file.$cancel()" data-ng-hide="!file.$cancel">
-                                <i class="glyphicon glyphicon-ban-circle"></i>
-                                <span>Cancel</span>
-                            </button>
-                            <button data-ng-controller="FileDestroyController" type="button" class="btn btn-danger destroy" data-ng-click="file.$destroy()" data-ng-hide="!file.$destroy">
-                                <i class="glyphicon glyphicon-trash"></i>
-                                <span>Delete</span>
-                            </button>
-                            <span class="btn btn-success fileinput-button" ng-class="{disabled: disabled}" data-ng-hide="!file.$destroy">
-                                <i class="glyphicon glyphicon-plus"></i>
-                                <span>Alter file...</span>
-                                <input type="file" name="file" multiple ng-disabled="disabled">
-                            </span>
-                        </td>
-                    </tr>
-                </table>
-                {{ queue | json }}
+                <div ui-sortable="sortableOptions" ng-model="queue">
+                    <div ng-repeat="file in queue" ng-controller="FileController">
+                        <table class="table table-striped files ng-cloak">
+                            <tr ng-class="{'processing': file.$processing()}">
+                                <td data-ng-switch data-on="!!file.thumbnailUrl">
+                                    <div class="preview" data-ng-switch-when="true">
+                                        <a data-ng-href="{{file.url}}" title="{{file.name}}" download="{{file.name}}"><img data-ng-src="{{file.thumbnailUrl}}" width="3" alt=""></a>
+                                    </div>
+                                    <div class="preview" data-ng-switch-default data-file-upload-preview="file"></div>
+                                </td>
+                                <td>
+                                    <p class="name" data-ng-switch data-on="!!file.url">
+                                        <span data-ng-switch-when="true" data-ng-switch on="!!file.thumbnailUrl">
+                                            <a ng-switch-when="true" data-ng-href="{{file.url}}" title="{{file.name}}" download="{{file.name}}">{{file.name}}</a>
+                                            <a ng-switch-default data-ng-href="{{file.url}}" title="{{file.name}}" download="{{file.name}}">{{file.name}}</a>
+                                        </span>
+                                        <span data-ng-switch-default>{{file.name}}</span>
+                                    </p>
+                                    <strong data-ng-show="file.error" class="error text-danger">{{file.error}}</strong>
+                                    <div>Ordem: {{file.info.order}} | bla: <input type="text" ng-model="file.info.bla"> {{file.info.bla}}</div>
+                                </td>
+                                <td>
+                                    <p class="size">{{file.size| formatFileSize}}</p>
+                                    <div class="progress progress-striped active fade" data-ng-class="{pending: 'in'}[file.$state()]" data-file-upload-progress="file.$progress()"><div class="progress-bar progress-bar-success" data-ng-style="{width: num + '%'}"></div></div>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-default start" data-ng-click="file.$submit()" data-ng-hide="!file.$submit || options.autoUpload" data-ng-disabled="file.$state() == 'pending' || file.$state() == 'rejected'">
+                                        <span>start</span>
+                                    </button>
+                                    <button type="button" class="btn btn-default cancel" data-ng-click="file.$cancel()" data-ng-hide="!file.$cancel">
+                                        <span>cancel</span>
+                                    </button>
+                                    <button ng-controller="FileDestroyController" type="button" class="btn btn-default destroy" data-ng-click="file.$destroy()" data-ng-hide="!file.$destroy">
+                                        <span>delete</span>
+                                    </button>
+                                    <span ng-controller="FileAlterController" class="btn btn-default fileinput-button" data-ng-hide="!file.url">
+                                        <span>alter</span>
+                                        <input type="file" name="file">
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <pre>{{ queue | json }}</pre>
             </form>
         </div>
         <script src="../bower_components/jquery/dist/jquery.js"></script>
         <script src="../bower_components/angular/angular.js"></script>
         <!-- The jQuery UI widget factory, can be omitted if jQuery UI is already included -->
-        <script src="../bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget.js"></script>
+        <script src="../bower_components/jquery-ui/ui/jquery-ui.js"></script>
         <!-- The Load Image plugin is included for the preview images and image resizing functionality -->
-        <script src="../bower_components/blueimp-load-image/js/load-image.js"></script>
+        <script src="../bower_components/blueimp-load-image/js/load-image.min.js"></script>
         <!-- The Canvas to Blob plugin is included for image resizing functionality -->
         <script src="../bower_components/blueimp-canvas-to-blob/js/canvas-to-blob.js"></script>
         <!-- Bootstrap JS is not required, but included for the responsive demo navigation -->
@@ -154,14 +151,17 @@
         <!-- The File Upload Angular JS module -->
         <script src="../bower_components/blueimp-file-upload/js/jquery.fileupload-angular.js"></script>
         <!-- The main application script -->
+
+        <script src="../bower_components/angular-ui-sortable/sortable.js"></script>
         <script>
             (function() {
                 'use strict';
 
-                var url = 'upload/';
+                var url = './upload';
 
                 angular.module('demo', [
-                    'blueimp.fileupload'
+                    'blueimp.fileupload',
+                    'ui.sortable'
                 ])
                         .config([
                             '$httpProvider', 'fileUploadProvider',
@@ -180,18 +180,39 @@
                                         disableImageResize: /Android(?!.*Chrome)|Opera/
                                                 .test(window.navigator.userAgent),
                                         maxFileSize: 5000000,
-                                        acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i
+                                        acceptFileTypes: /(\.|\/)(gif|jpe?g|png|zip)$/i
                                     });
                                 //}
                             }
                         ])
 
                         .controller('DemoFileUploadController', [
-                            '$scope', '$http', '$filter', '$window',
+                            '$scope', '$http',
                             function($scope, $http) {
                                 $scope.options = {
-                                    url: url
+                                    url: url,
+                                    submit: function (e, data) {
+                                        data.formData = data.files[0].info;
+                                        return true;
+                                    }
                                 };
+                                $scope.sortableOptions = {
+                                    // axis: 'y',
+                                    tolerance: 'pointer',
+                                    update: function (e, ui) {
+                                        var item = ui.item.scope();
+                                        console.log('item sortable', item);
+                                        console.log('sorteou', ui);
+                                    }
+                                }
+                                $scope.$watchCollection('queue', function (files) {
+                                    console.log('meu collection', files);
+                                    for (var i = 0; i < files.length; i+= 1) {
+                                        var file = files[i];
+                                        file.info = file.info || { order:0 };
+                                        file.info.order = i + 1;
+                                    }
+                                });
                                 $scope.loadingFiles = true;
                                 $http.get(url)
                                         .then(
@@ -203,6 +224,54 @@
                                                     $scope.loadingFiles = false;
                                                 }
                                         );
+                            }
+                        ])
+
+                        .controller('FileController', [
+                            '$scope',
+                            function($scope) {
+                                var file = $scope.file,
+                                        state;
+
+                                //file.info = file.info || { order:0 };
+
+                                $scope.$watch('file', function () {
+                                    console.log('meu file', file.name, file.info);
+                                }, true);
+
+                                /*$scope.$on('updateOrder', function ($event, val) {
+                                    console.log('recebi!' + $scope.$index, file);
+                                })*/
+
+                                /*$scope.$watch('file', function (newVal) {
+                                    file.info.order = $scope.$index + 1;
+                                });*/
+
+                                /*if (file.url) {
+
+                                    file.$state = function() {
+                                        return state;
+                                    };
+                                    file.$destroy = function() {
+                                        state = 'pending';
+                                        return $http({
+                                            url: file.deleteUrl,
+                                            method: file.deleteType
+                                        }).then(
+                                                function() {
+                                                    state = 'resolved';
+                                                    $scope.clear(file);
+                                                },
+                                                function() {
+                                                    state = 'rejected';
+                                                }
+                                        );
+                                    };
+                                } else if (!file.$cancel && !file._index) {
+                                    file.$cancel = function() {
+                                        $scope.clear(file);
+                                    };
+                                }*/
                             }
                         ])
 
@@ -236,8 +305,32 @@
                                     };
                                 }
                             }
-                        ]);
+                        ])
 
+                        .controller('FileAlterController', [
+                            '$scope', '$element',
+                            function($scope, $element) {
+                                var file = $scope.file,
+                                    input = $element.find('input[type=file]');
+
+                                if (file.url) { // já fez o upload
+                                    input.fileupload({
+                                        url: url+'/'+file.name,
+                                        done: function (e, data) {
+                                            $scope.$apply(function () {
+                                                $scope.replace([file], data.result.files);
+                                            });
+                                        }
+                                    });
+                                }
+
+                                /*$scope.$on('$destroy', function () {
+                                    // avoid memory leak
+                                    input.fileupload('destroy');
+                                });*/
+
+                            }
+                        ]);
             }());
         </script>
     </body>
