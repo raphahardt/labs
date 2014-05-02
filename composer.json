@@ -3,6 +3,11 @@
         "silex/silex": "~1.2",
         "knplabs/gaufrette": "*",
         "symfony/filesystem": "*",
-        "imagine/imagine": "*"
+        "symfony/finder": "*",
+        "imagine/imagine": "*",
+        "doctrine/orm": "~2"
+    },
+    "autoload": {
+        "psr-0": { "Reacao\\": "src/" }
     }
 }

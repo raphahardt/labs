@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>jQuery File Upload Demo - AngularJS version</title>
+        <title>teste</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!-- Bootstrap styles -->
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
@@ -56,6 +56,10 @@
                         <span class="btn btn-default fileinput-button" ng-class="{disabled: disabled}">
                             <span>add</span>
                             <input type="file" name="files[]" multiple ng-disabled="disabled">
+                        </span>
+                        <span class="btn btn-default fileinput-button" ng-class="{disabled: disabled}">
+                            <span>add zip/rar</span>
+                            <input type="file" name="files[]" ng-disabled="disabled">
                         </span>
                         <button type="button" class="btn btn-default start" ng-click="submit()">
                             <span>start</span>
@@ -201,12 +205,12 @@
                                     tolerance: 'pointer',
                                     update: function (e, ui) {
                                         var item = ui.item.scope();
-                                        console.log('item sortable', item);
-                                        console.log('sorteou', ui);
+                                        //console.log('item sortable', item);
+                                        //console.log('sorteou', ui);
                                     }
                                 }
                                 $scope.$watchCollection('queue', function (files) {
-                                    console.log('meu collection', files);
+                                    //console.log('meu collection', files);
                                     for (var i = 0; i < files.length; i+= 1) {
                                         var file = files[i];
                                         file.info = file.info || { order:0 };
@@ -228,15 +232,34 @@
                         ])
 
                         .controller('FileController', [
-                            '$scope',
-                            function($scope) {
+                            '$scope', '$http',
+                            function($scope, $http) {
                                 var file = $scope.file,
                                         state;
 
                                 //file.info = file.info || { order:0 };
 
-                                $scope.$watch('file', function () {
-                                    console.log('meu file', file.name, file.info);
+                                $scope.$watch('file', function (newFile, oldFile) {
+
+                                    if (newFile !== oldFile) {
+                                        $http({
+                                            url: file.deleteUrl,
+                                            method: 'PUT',
+                                            /*params: {
+                                                '_method': 'PUT'
+                                            },*/
+                                            data: {
+                                                order: newFile.info.order,
+                                                bla: newFile.info.bla
+                                            }
+                                        }).then(
+                                                function (response) {
+                                                    //angular.extend($scope.file, response.data);
+                                                },
+                                                function () {
+                                                    throw new Error('erro!')
+                                                });
+                                    }
                                 }, true);
 
                                 /*$scope.$on('updateOrder', function ($event, val) {
@@ -315,7 +338,11 @@
 
                                 if (file.url) { // já fez o upload
                                     input.fileupload({
-                                        url: url+'/'+file.name,
+                                        url: file.deleteUrl,
+                                        submit: function (e, data) {
+                                            data.formData = file.info;
+                                            return true;
+                                        },
                                         done: function (e, data) {
                                             $scope.$apply(function () {
                                                 $scope.replace([file], data.result.files);
