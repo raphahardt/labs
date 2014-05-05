@@ -34,6 +34,7 @@ class PublishController
 
     public function __construct(Connection $db, $path)
     {
+        //sleep(mt_rand(2, 5));
         $this->db = $db;
         $this->path = $path;
     }

@@ -3,6 +3,7 @@
 use Reacao\Controller\PublishController;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
+use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\UrlGeneratorServiceProvider;
@@ -128,6 +129,7 @@ $app['debug'] = true;
 $app->register(new UrlGeneratorServiceProvider());
 $app->register(new SessionServiceProvider());
 $app->register(new TwigServiceProvider());
+$app->register(new ServiceControllerServiceProvider());
 $app->register(new DoctrineServiceProvider(), array(
     'db.options' => array(
         'driver'    => 'mysqli',
