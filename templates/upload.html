@@ -34,6 +34,45 @@
                     height: 100%;
                 }
             }
+
+            /*
+            .page.ng-enter,
+            /*.page.ng-move, * /
+            .page.ng-leave {
+                -webkit-transition:.45s ease;
+                   -moz-transition:.45s ease;
+                     -o-transition:.45s ease;
+                        transition:.45s ease;
+                -webkit-transition-property: opacity, -webkit-transform;
+                   -moz-transition-property: opacity, -moz-transform;
+                     -o-transition-property: opacity, -o-transform;
+                        transition-property: opacity, transform;
+            }
+            .page.ng-enter,
+            /*.page.ng-move, * /
+            .page.ng-leave.ng-leave-active {
+                opacity:0;
+                -webkit-transform: scale(0.7) rotate(-5deg);
+                   -moz-transform: scale(0.7) rotate(-5deg);
+                     -o-transform: scale(0.7) rotate(-5deg);
+                        transform: scale(0.7) rotate(-5deg);
+            }
+
+            .page.ng-enter.ng-enter-active,
+            /*.page.ng-move.ng-move-active, * /
+            .page.ng-leave {
+                opacity:1;
+                -webkit-transform: none;
+                   -moz-transform: none;
+                     -o-transform: none;
+                        transform: none;
+            }
+
+            .page.ng-enter-active + .page.ng-leave {
+                margin-left: -180px;
+                position:absolute;
+            }/**/
+
         </style>
         <!-- CSS adjustments for browsers with JavaScript disabled -->
         <style>
@@ -50,9 +89,12 @@
                 .page {
                     width: 180px;
                     height: 230px;
-                    background: #eee;
                     display: inline-block;
                     overflow:hidden;
+                    margin:3px;
+                    box-sizing: content-box;
+                    -moz-box-sizing: content-box;
+                    -webkit-box-sizing: content-box;
                 }
                 .page .preview,
                 .page .preview .preview-progress{
@@ -61,7 +103,7 @@
                 .page .preview img,
                 .page .preview canvas {
                     width:180px;
-                    opacity:0.13 !important;
+                    opacity:0.053 !important;
                 }
                 .page .preview .preview-progress .back,
                 .page .preview .preview-progress .fore{
@@ -100,6 +142,49 @@
                 .page .preview .preview-properties .btn:hover {
                     opacity:1;
                 }
+                .page .preview .preview-properties .btn:disabled *,
+                .page .preview .preview-properties .btn.disabled *{
+                    opacity:0.9;
+                }
+
+                .page .page-inner {
+                    background: #eee;
+                    height: 230px;
+                    position: relative;
+                }
+                .page.page-double {
+                    margin-left: 6px;
+                    margin-right: 0;
+                }
+                .page.page-double + .page {
+                    margin-right: 6px;
+                    margin-left: 0;
+                }
+                .page.page-cover {
+                    margin: 0 !important;
+                    border: 3px solid #aaa;
+                }
+                .page .page-properties {
+                    position: absolute;
+                    left: 0;
+                    bottom: 0;
+                    width: 180px;
+                    padding: 10px;
+                    background: rgba(0,0,0,.06);
+                    color: #000;
+
+                }
+
+                .page .page-move-handle {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 180px;
+                    height: 230px;
+                    text-align: center;
+                    cursor: move;
+                }
+
                 .loading-status {
                     display:none;
                 }
@@ -110,8 +195,6 @@
             </style>
             <!-- The file upload form used as target for the file upload widget -->
             <form id="fileupload" action="./upload" method="POST" enctype="multipart/form-data" ng-app="demo" ng-controller="DemoFileUploadController" file-upload="options" ng-class="{'fileupload-processing': processing() || loadingFiles}">
-                <!-- Redirect browsers with JavaScript disabled to the origin page -->
-                <noscript><input type="hidden" name="redirect" value="http://blueimp.github.io/jQuery-File-Upload/"></noscript>
                 <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
                 <div class="row fileupload-buttonbar">
                     <div class="col-lg-7">
@@ -130,6 +213,9 @@
                         <button type="button" class="btn btn-default cancel" ng-click="cancel()">
                             <span>cancel</span>
                         </button>
+                        <button type="button" class="btn btn-default cancel" ng-click="applyOnQueue('$destroy')">
+                            <span>delete all</span>
+                        </button>
                         <!-- The global file processing state -->
                         <span class="fileupload-process"></span>
                     </div>
@@ -143,36 +229,50 @@
                 </div>
                 <!-- The table listing the files available for upload/download -->
                 <div ui-sortable="sortableOptions" ng-model="queue" class="pages ng-cloak">
-                    <div ng-repeat="file in queue" ng-controller="FileController" class="page">
-                        <div class="page-inner" ng-switch on="!!file.thumbnailUrl">
-                            {{ file.$state }}
-                            {{ file.info.order }}
-                            {{ file.name }}
-                            <div class="preview" ng-switch-when="true">
-                                <img ng-src="{{file.thumbnailUrl}}" alt=""/>
+                    <div ng-repeat="file in queue" data-page="file" class="page" ng-class="{ 'page-double': file.info.double, 'page-cover': $first }">
+                        <div class="page-inner">
+                            <div class="preview" ng-switch on="!!file.thumbnailUrl">
+                                <img ng-switch-when="true" ng-src="{{file.thumbnailUrl}}" alt=""/>
+                                <div ng-switch-default class="preview-progress" data-file-upload-progress="file.$progress()">
+                                    <div class="back" data-page-preview="file"></div>
+                                    <div class="fore" data-page-preview="file" ng-style="{width: num + '%'}"></div>
+                                </div>
+                                <div class="page-move-handle" ng-hide="file.$state === 'pending'">
+                                </div>
                                 <div class="btn-group preview-properties">
-                                    <span ng-controller="FileAlterController" class="btn btn-sm fileinput-button" title="Alterar imagem">
+                                    <span title="Alterar imagem"
+                                          data-page-edit="file"
+                                          class="btn btn-sm fileinput-button"
+                                          ng-hide="!file.id"
+                                          ng-class="{pending: 'disabled'}[file.$state]">
                                         <i class="fa fa-pencil"></i>
-                                        <input type="file" name="file">
+                                        <input type="file" name="file" ng-hide="file.$state === 'pending'">
                                     </span>
-                                    <button ng-controller="FileDestroyController" ng-click="file.$destroy()" type="button" class="btn btn-sm" title="Excluir página">
+                                    <button title="Excluir página"
+                                            type="button"
+                                            data-page-destroy="file"
+                                            ng-click="file.$destroy()"
+                                            ng-hide="!file.$destroy"
+                                            class="btn btn-sm"
+                                            ng-disabled="file.$state === 'pending'">
                                         <i class="fa fa-times"></i>
                                     </button>
-                                </div>
-                            </div>
-                            <div class="preview" ng-switch-default>
-                                <div class="preview-progress" data-file-upload-progress="file.$progress()">
-                                    <div class="back" ng-controller="PreviewController"></div>
-                                    <div class="fore" ng-controller="PreviewController" ng-style="{width: num + '%'}"></div>
-                                </div>
-                                <div class="btn-group preview-properties">
-                                    <button ng-click="file.$cancel()" type="button" class="btn btn-sm" title="Cancelar">
+                                    <button title="Cancelar"
+                                            type="button"
+                                            ng-click="file.$cancel()"
+                                            ng-hide="!file.$cancel"
+                                            class="btn btn-sm">
                                         <i class="fa fa-ban"></i>
                                     </button>
                                 </div>
                             </div>
-                            <div class="page-properties">
-
+                            <div class="page-properties" ng-hide="!file.$save">
+                                <span class="loading fade" ng-class="{ pending: 'in' }[file.$state]">
+                                    <i class="fa fa-spin fa-clock-o"></i>
+                                </span>
+                                <label ng-show="$odd && !$last">
+                                    <input type="checkbox" ng-model="file.info.double">
+                                </label>
                             </div>
                         </div>
 <!--                        <table class="table table-striped files ng-cloak">
@@ -223,6 +323,7 @@
         </div>
         <script src="../bower_components/jquery/dist/jquery.js"></script>
         <script src="../bower_components/angular/angular.js"></script>
+        <script src="../bower_components/angular-animate/angular-animate.js"></script>
         <!-- The jQuery UI widget factory, can be omitted if jQuery UI is already included -->
         <script src="../bower_components/jquery-ui/ui/jquery-ui.js"></script>
         <!-- The Load Image plugin is included for the preview images and image resizing functionality -->
@@ -259,6 +360,7 @@
                 var url = './upload';
 
                 angular.module('demo', [
+                    'ngAnimate',
                     'blueimp.fileupload',
                     'ui.sortable'
                 ])
@@ -374,26 +476,52 @@
                                         return true;
                                     }
                                 };
+                                $scope.$sorted = false;
                                 $scope.sortableOptions = {
                                     // axis: 'y',
                                     tolerance: 'pointer',
+                                    handle: '.page-move-handle',
                                     update: function (e, ui) {
                                         var item = ui.item.scope();
 
                                         if (item.file.$state !== 'ok') {
                                             ui.item.sortable.cancel();
                                         }
-                                        //console.log('item sortable', item);
+                                        console.log('item sortable', item);
+                                        $scope.$sorted = true;
                                         //console.log('sorteou', ui);
                                     }
-                                }
+                                };
+
+                                $scope.replace = function (oldFiles, newFiles) {
+                                    var queue = this.queue,
+                                        file = oldFiles[0],
+                                        i,
+                                        j;
+                                    for (i = 0; i < queue.length; i += 1) {
+                                        if (queue[i] === file) {
+                                            Array.prototype.splice.apply(queue, [i, 1].concat(newFiles));
+                                            // queue.splice(i, 1, newFile[0], newFile[1], ... newFile[n]);
+                                            return;
+                                        }
+                                    }
+                                };
+
                                 $scope.$watchCollection('queue', function (files) {
                                     //console.log('meu collection', files);
                                     for (var i = 0; i < files.length; i+= 1) {
                                         var file = files[i];
                                         file.info = file.info || { order:0 };
-                                        file.info.order = i + 1;
+                                        if ($scope.$sorted) {
+                                            file.info.order = i + 1;
+                                        }
+
+                                        if (i % 2 === 0 && file.info.double) {
+                                            file.info.double = false; // obriga pagina não-impar a nunca ser dupla
+                                            if (files[i-1]) files[i-1].info.double = true; // se tava como dupla, definir a anterior
+                                        }
                                     }
+                                    $scope.$sorted = false;
                                 });
                                 $scope.loadingFiles = true;
                                 $http.get(url)
@@ -409,102 +537,136 @@
                             }
                         ])
 
-                        .controller('FileController', [
-                            '$scope', '$http', '$debounce',
-                            function($scope, $http, $debounce) {
-                                var file = $scope.file,
-                                    save = function () {
-                                        file.$state = 'pending';
-                                        $http({
-                                            url: file.deleteUrl,
-                                            method: 'PUT',
-                                            data: file.info
-                                        }).then(
-                                                function (response) {
-                                                    //angular.extend($scope.file, response.data);
-                                                    file.$state = 'ok';
-                                                },
-                                                function () {
-                                                    file.$state = 'rejected';
-                                                    throw new Error('erro!')
-                                                });
-                                    };
+                        .directive('page', [
+                            '$http', '$debounce',
+                            function ($http, $debounce) {
+                                return {
+                                    restrict: 'A',
+                                    priority: 128, // executa primeiro
+                                    controller: function ($scope, $element, $attrs) {
+                                        var file = $scope.file;
 
-                                $scope.$watch('file.info', function (newFile, oldFile) {
-                                    if (newFile !== oldFile && file.id) {
-                                        $debounce(save, 500);
-                                    }
-                                }, true);
-                            }
-                        ])
-
-                        .controller('FileDestroyController', [
-                            '$scope', '$http',
-                            function($scope, $http) {
-                                var file = $scope.file;
-
-                                if (file.url) {
-                                    file.$state = file.$state || 'ok';
-                                    file.$destroy = function() {
-                                        file.$state = 'pending';
-                                        return $http({
-                                            url: file.deleteUrl,
-                                            method: file.deleteType
-                                        }).then(
-                                                function() {
-                                                    file.$state = 'ok';
-                                                    $scope.clear(file);
-                                                },
-                                                function() {
-                                                    file.$state = 'rejected';
+                                        file.$state = file.$state || 'ok';
+                                        if (!file.$save) {
+                                            file.$save = function () {
+                                                if (file.id) {
+                                                    file.$state = 'pending';
+                                                    $http({
+                                                        url: file.deleteUrl,
+                                                        method: 'PUT',
+                                                        data: file.info
+                                                    }).then(
+                                                            function (response) {
+                                                                angular.extend($scope.file.info, response.data.info);
+                                                                file.$state = 'ok';
+                                                            },
+                                                            function () {
+                                                                file.$state = 'rejected';
+                                                                // TODO: tratar erro
+                                                                throw new Error('erro!')
+                                                            });
                                                 }
-                                        );
-                                    };
-                                } else if (!file.$cancel && !file._index) {
-                                    file.$cancel = function() {
-                                        $scope.clear(file);
-                                    };
-                                }
+                                            }
+                                        }
+
+                                        // verifica alterações e salva
+                                        $scope.$watch('file.info', function (newFile, oldFile) {
+                                            if (newFile !== oldFile) {
+                                                $debounce(file.$save, 500);
+                                            }
+                                        }, true);
+                                    }
+                                };
                             }
                         ])
 
-                        .controller('FileAlterController', [
-                            '$scope', '$element',
-                            function($scope, $element) {
-                                var file = $scope.file,
-                                    input = $element.find('input[type=file]');
+                        .directive('pageDestroy', [
+                            '$http',
+                            function ($http) {
+                                return {
+                                    restrict: 'A',
+                                    priority: 128, // executa primeiro
+                                    require: '^page',
+                                    controller: function ($scope) {
+                                        var file = $scope.file;
 
-                                if (file.url) { // já fez o upload
-                                    file.$state = file.$state || 'ok';
-
-                                    input.fileupload({
-                                        url: file.deleteUrl,
-                                        submit: function (e, data) {
-                                            $scope.$apply(function () {
+                                        if (file.url) {
+                                            file.$destroy = function() {
                                                 file.$state = 'pending';
-                                            });
-                                            data.formData = file.info;
-                                            return true;
-                                        },
-                                        done: function (e, data) {
-                                            $scope.$apply(function () {
-                                                $scope.replace([file], data.result.files);
-                                                file.$state = 'ok';
+                                                return $http({
+                                                    url: file.deleteUrl,
+                                                    method: file.deleteType
+                                                }).then(
+                                                        function() {
+                                                            file.$state = 'ok';
+                                                            $scope.clear(file);
+                                                        },
+                                                        function() {
+                                                            file.$state = 'rejected';
+                                                        }
+                                                );
+                                            };
+                                        } else if (!file.$cancel && !file._index) {
+                                            file.$cancel = function() {
+                                                $scope.clear(file);
+                                            };
+                                        }
+                                    }
+                                };
+                            }
+                        ])
+
+                        .directive('pageEdit', [
+                            function () {
+                                return {
+                                    restrict: 'A',
+                                    priority: 128, // executa primeiro
+                                    require: '^page',
+                                    controller: function ($scope, $element) {
+                                        var file = $scope.file,
+                                            input = $element.find('input[type=file]');
+
+                                        if (file.url) { // já fez o upload
+
+                                            input.fileupload({
+                                                url: file.deleteUrl,
+                                                submit: function (e, data) {
+                                                    $scope.$apply(function () {
+                                                        file.$state = 'pending';
+                                                    });
+                                                    data.formData = file.info;
+                                                    return true;
+                                                },
+                                                done: function (e, data) {
+                                                    $scope.$apply(function () {
+                                                        $scope.replace([file], data.result.files);
+                                                        file.$state = 'ok';
+                                                    });
+                                                }
                                             });
                                         }
-                                    });
-                                }
 
-                                /*$scope.$on('$destroy', function () {
-                                    // avoid memory leak
-                                    input.fileupload('destroy');
-                                });*/
+                                        /*$scope.$on('$destroy', function () {
+                                            // avoid memory leak
+                                            input.fileupload('destroy');
+                                        });*/
+                                    }
+                                };
+                            }
+                        ])
 
+                        .directive('pagePreview', [
+                            function () {
+                                return {
+                                    restrict: 'A',
+                                    require: '^page',
+                                    controller: 'PagePreviewController'
+                                };
                             }
                         ])
 
                         // Display File Upload previews:
-                        .controller('PreviewController', [
+                        .controller('PagePreviewController', [
                             '$scope', '$element', '$attrs',
                             function ($scope, $element, $attrs) {
 
@@ -525,7 +687,7 @@
                                 }
 
                                 $scope.$watch(
-                                    'file.preview',
+                                    $attrs.pagePreview + '.preview',
                                     function (preview) {
                                         $element.empty();
                                         if (preview) {

@@ -1,5 +1,6 @@
 <?php
 
+use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Reacao\Controller\PublishController;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
@@ -138,6 +139,30 @@ $app->register(new DoctrineServiceProvider(), array(
         'user'      => 'root',
         'password'  => '',
         'charset'   => 'utf8',
+    ),
+));
+
+$app->register(new DoctrineOrmServiceProvider, array(
+    "orm.proxies_dir" => __DIR__."/../var/orm/proxies",
+    "orm.default_cache" => $app['debug'] ? "array" : (!function_exists('apc_fetch') ? "filesystem" : "apc"),
+    "orm.em.options" => array(
+        "query_cache" => array(
+            "path" => __DIR__."/../var/orm/query",
+        ),
+        "metadata_cache" => array(
+            "path" => __DIR__."/../var/orm/metadata",
+        ),
+        "result_cache" => array(
+            "path" => __DIR__."/../var/orm/result",
+        ),
+        "mappings" => array(
+            // Using actual filesystem paths
+            array(
+                "type" => "annotation",
+                "namespace" => "Reacao\Entity",
+                "path" => __DIR__."/../src/Reacao/Entity",
+            ),
+        ),
     ),
 ));
 
