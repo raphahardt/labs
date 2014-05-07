@@ -6,6 +6,7 @@
         "symfony/finder": "*",
         "imagine/imagine": "*",
         "doctrine/orm": "~2",
+        "monolog/monolog": ">=1.0.0",
         "dflydev/doctrine-orm-service-provider": "~1.0"
     },
     "autoload": {

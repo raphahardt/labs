@@ -106,7 +106,8 @@
                     opacity:0.053 !important;
                 }
                 .page .preview .preview-progress .back,
-                .page .preview .preview-progress .fore{
+                .page .preview .preview-progress .fore,
+                .page .preview .preview-progress .title{
                     position: absolute;
                     width:100%;
                     height: 230px;
@@ -123,6 +124,15 @@
                     transition: width ease 0.4s;
                     -moz-transition: width ease 0.4s;
                     -webkit-transition: width ease 0.4s;
+                }
+                .page .preview .preview-progress .title {
+                    display: table;
+                }
+                .page .preview .preview-progress .title span {
+                    display: table-cell;
+                    vertical-align: middle;
+                    font-size: 13px;
+                    text-align: center;
                 }
                 .page .preview .preview-properties {
                     position: absolute;
@@ -192,12 +202,37 @@
                     display:block;
                 }
 
+
+                .dropzone {
+                    height: 50px;
+                    line-height: 50px;
+                    text-align: center;
+                    font-weight: bold;
+                }
+                .dropzone.in {
+                    height: 100px;
+                    line-height: 100px;
+                    font-size: larger;
+                    background: #eee;
+                }
+                .dropzone.hover {
+                    background: lawngreen;
+                }
+                .dropzone.fade {
+                    -webkit-transition: all 0.3s ease-out;
+                    -moz-transition: all 0.3s ease-out;
+                    -ms-transition: all 0.3s ease-out;
+                    -o-transition: all 0.3s ease-out;
+                    transition: all 0.3s ease-out;
+                    opacity: 0.4;
+                }
+
             </style>
             <!-- The file upload form used as target for the file upload widget -->
             <form id="fileupload" action="./upload" method="POST" enctype="multipart/form-data" ng-app="demo" ng-controller="DemoFileUploadController" file-upload="options" ng-class="{'fileupload-processing': processing() || loadingFiles}">
                 <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
                 <div class="row fileupload-buttonbar">
-                    <div class="col-lg-7">
+                    <div class="col-lg-6">
                         <!-- The fileinput-button span is used to style the file input field as button -->
                         <span class="btn btn-default fileinput-button" ng-class="{disabled: disabled}">
                             <span>add</span>
@@ -216,15 +251,21 @@
                         <button type="button" class="btn btn-default cancel" ng-click="applyOnQueue('$destroy')">
                             <span>delete all</span>
                         </button>
+
                         <!-- The global file processing state -->
                         <span class="fileupload-process"></span>
                     </div>
                     <!-- The global progress state -->
-                    <div class="col-lg-5 fade" data-ng-class="{in: active()}">
+                    <div class="col-lg-3 fade" data-ng-class="{in: active()}">
                         <!-- The global progress bar -->
                         <div class="progress progress-striped active" data-file-upload-progress="progress()"><div class="progress-bar progress-bar-success" data-ng-style="{width: num + '%'}"></div></div>
                         <!-- The extended global progress state -->
                         <div class="progress-extended">&nbsp;</div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="dropzone fade">
+                            Drop here
+                        </div>
                     </div>
                 </div>
                 <!-- The table listing the files available for upload/download -->
@@ -234,6 +275,9 @@
                             <div class="preview" ng-switch on="!!file.thumbnailUrl">
                                 <img ng-switch-when="true" ng-src="{{file.thumbnailUrl}}" alt=""/>
                                 <div ng-switch-default class="preview-progress" data-file-upload-progress="file.$progress()">
+                                    <div ng-show="!file.preview" class="title">
+                                        <span>{{file.name}}</span>
+                                    </div>
                                     <div class="back" data-page-preview="file"></div>
                                     <div class="fore" data-page-preview="file" ng-style="{width: num + '%'}"></div>
                                 </div>
@@ -354,6 +398,46 @@
 
         <script src="../bower_components/angular-ui-sortable/sortable.js"></script>
         <script>
+            $(function () {
+                $(document).bind('drop dragover', function (e) {
+                    e.preventDefault();
+                });
+                $(document).bind('dragover', function (e) {
+                    var dropZone = $('.dropzone'),
+                        foundDropzone,
+                        timeout = window.dropZoneTimeout;
+
+                    if (!timeout) {
+                        dropZone.addClass('in');
+                    } else {
+                        clearTimeout(timeout);
+                    }
+                    var found = false,
+                    node = e.target;
+
+                    do {
+                        if ($(node).hasClass('dropzone')) {
+                            found = true;
+                            foundDropzone = $(node);
+                            break;
+                        }
+
+                        node = node.parentNode;
+
+                    } while (node != null);
+
+                    dropZone.removeClass('hover');
+
+                    if (found) {
+                        foundDropzone.addClass('hover');
+                    }
+
+                    window.dropZoneTimeout = setTimeout(function () {
+                        window.dropZoneTimeout = null;
+                        dropZone.removeClass('in hover');
+                    }, 100);
+                });
+            });
             (function() {
                 'use strict';
 
@@ -471,6 +555,7 @@
                             function($scope, $http) {
                                 $scope.options = {
                                     url: url,
+                                    dropZone: $('.dropzone'),
                                     submit: function (e, data) {
                                         data.formData = data.files[0].info;
                                         return true;
@@ -511,8 +596,8 @@
                                     //console.log('meu collection', files);
                                     for (var i = 0; i < files.length; i+= 1) {
                                         var file = files[i];
-                                        file.info = file.info || { order:0 };
-                                        if ($scope.$sorted) {
+                                        file.info = file.info || { order:false };
+                                        if ($scope.$sorted || file.info.order === false) {
                                             file.info.order = i + 1;
                                         }
 
@@ -630,6 +715,7 @@
 
                                             input.fileupload({
                                                 url: file.deleteUrl,
+                                                dropZone: false,
                                                 submit: function (e, data) {
                                                     $scope.$apply(function () {
                                                         file.$state = 'pending';

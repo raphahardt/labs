@@ -8,6 +8,8 @@ use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\UrlGeneratorServiceProvider;
+use Symfony\Component\Debug\ErrorHandler;
+use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -169,12 +171,14 @@ $app->register(new DoctrineOrmServiceProvider, array(
 $app['twig.path'] = array(__DIR__.'/../templates');
 //$app['twig.options'] = array('cache' => __DIR__.'/../var/cache/twig');
 
-$app['path.public'] = __DIR__.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR;
+$app['path.public'] = __DIR__.'/public/';
 $app['reacao.controller.publish'] = function () use ($app) {
-    return new PublishController($app['db'], $app['path.public']);
+    return new PublishController($app['db'], $app['request'], $app['path.public'], new Imagine\Gd\Imagine());
 };
 
 Request::enableHttpMethodParameterOverride();
+ErrorHandler::register();
+ExceptionHandler::register($app['debug']);
 
 /*
  * para tratar POSTs que vem como json
