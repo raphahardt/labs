@@ -1,19 +1,23 @@
 <?php
 
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
+use Doctrine\Common\Annotations\AnnotationRegistry;
 use Reacao\Controller\PublishController;
+use Reacao\Provider\ImagineServiceProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\UrlGeneratorServiceProvider;
+use Silex\Provider\ValidatorServiceProvider;
 use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\Request;
 
-require __DIR__.'/../vendor/autoload.php';
+$loader = require __DIR__.'/../vendor/autoload.php';
+AnnotationRegistry::registerLoader(array($loader, 'loadClass'));
 
 class TemporaryUnzipper {
 
@@ -66,16 +70,17 @@ class TemporaryUnzipper {
         $files = array();
         foreach ($finder as $file) {
             /* @var $file SplFileInfo */
-            rename(
+            /*rename(
                     $zipFolder.$file->getFilename(),
                     $this->moveToDir.$file->getFilename()
                     );
 
-            $files[] = new SplFileInfo($this->moveToDir.$file->getFilename());
+            $files[] = new SplFileInfo($this->moveToDir.$file->getFilename());*/
+            $files[] = $file;
         }
 
         // deleta pasta criada e arquivos
-        rmdir($zipFolder);
+        //rmdir($zipFolder);
 
         return $files;
     }
@@ -133,6 +138,8 @@ $app->register(new UrlGeneratorServiceProvider());
 $app->register(new SessionServiceProvider());
 $app->register(new TwigServiceProvider());
 $app->register(new ServiceControllerServiceProvider());
+$app->register(new ImagineServiceProvider());
+$app->register(new ValidatorServiceProvider());
 $app->register(new DoctrineServiceProvider(), array(
     'db.options' => array(
         'driver'    => 'mysqli',
@@ -144,25 +151,33 @@ $app->register(new DoctrineServiceProvider(), array(
     ),
 ));
 
-$app->register(new DoctrineOrmServiceProvider, array(
+$default_cache = $app['debug'] ? "array" : (!function_exists('apc_fetch') ? "filesystem" : "apc");
+$app->register(new DoctrineOrmServiceProvider(), array(
     "orm.proxies_dir" => __DIR__."/../var/orm/proxies",
-    "orm.default_cache" => $app['debug'] ? "array" : (!function_exists('apc_fetch') ? "filesystem" : "apc"),
+    "orm.default_cache" => array(
+        "cache" => $default_cache,
+        "path" => __DIR__."/../var/orm/cache",
+    ),
     "orm.em.options" => array(
-        "query_cache" => array(
+        /*"query_cache" => array(
+            "cache" => $default_cache,
             "path" => __DIR__."/../var/orm/query",
         ),
         "metadata_cache" => array(
+            "cache" => $default_cache,
             "path" => __DIR__."/../var/orm/metadata",
         ),
         "result_cache" => array(
+            "cache" => $default_cache,
             "path" => __DIR__."/../var/orm/result",
-        ),
+        ),*/
         "mappings" => array(
             // Using actual filesystem paths
             array(
                 "type" => "annotation",
-                "namespace" => "Reacao\Entity",
-                "path" => __DIR__."/../src/Reacao/Entity",
+                "namespace" => "Reacao\Model",
+                "path" => __DIR__."/../src/Reacao/Model",
+                "use_simple_annotation_reader" => false, // usar annotations
             ),
         ),
     ),
@@ -173,7 +188,7 @@ $app['twig.path'] = array(__DIR__.'/../templates');
 
 $app['path.public'] = __DIR__.'/public/';
 $app['reacao.controller.publish'] = function () use ($app) {
-    return new PublishController($app['db'], $app['request'], $app['path.public'], new Imagine\Gd\Imagine());
+    return new PublishController($app['db'], $app['request'], $app['path.public'], $app['imagine']);
 };
 
 Request::enableHttpMethodParameterOverride();

@@ -459,6 +459,7 @@
                                 //if (isOnGitHub) {
                                     // Demo settings:
                                     angular.extend(fileUploadProvider.defaults, {
+                                        maxChunkSize: 2000000, // 2 MB
                                         previewMaxWidth: 180,
                                         previewMaxHeight: 0,
                                         // Enable image resizing, except for Android and Opera,
@@ -466,7 +467,7 @@
                                         // send Blob objects via XHR requests:
                                         disableImageResize: /Android(?!.*Chrome)|Opera/
                                                 .test(window.navigator.userAgent),
-                                        maxFileSize: 5000000,
+                                        maxFileSize: 9000000,
                                         acceptFileTypes: /(\.|\/)(gif|jpe?g|png|zip)$/i
                                     });
                                 //}

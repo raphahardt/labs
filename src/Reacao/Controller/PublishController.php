@@ -15,6 +15,7 @@ use Imagine\Image\ImagineInterface;
 use Imagine\Image\Point;
 use Psr\Log\LoggerInterface;
 use Reacao\Exception\FileAlreadyExistsException;
+use Reacao\File\Uploader;
 use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -30,13 +31,14 @@ use TemporaryUnzipper;
 class PublishController
 {
 
+    protected $path = '';
+    protected $basePath = '';
+
     /**
      *
      * @var Connection
      */
     protected $db;
-    protected $path = '';
-    protected $basePath = '';
 
     /**
      *
@@ -55,7 +57,7 @@ class PublishController
     {
         //sleep(mt_rand(2, 5));
         $this->db = $db;
-        $this->path = $path;
+        $this->path = $path; // TODO: trocar o caminho por um objeto "usuário" que contem as configurações nele (tipo getFolder()..)
         $this->basePath = $request->getSchemeAndHttpHost() . $request->getBasePath() . '/';
         $this->imagine = $imagine;
     }
@@ -96,12 +98,12 @@ class PublishController
      * de que o nome gerado não irá substituir outro arquivo com nome igual,
      * passe um path no $checkFolder.
      *
-     * @param string $extension Extensão do arquivo (ex: jpg, gif, png)
-     * @param string $checkFolder Caso informado, checará se o nome gerado já não existe
-     *                             na pasta e gera outro até que o nome seja único
-     *                            (se $recursive for TRUE)
-     * @param bool $recursive Se TRUE, a função irá rodar até encontrar um nome único
-     *                        (só funciona com $checkFolder)
+     * @param string $extension    Extensão do arquivo (ex: jpg, gif, png)
+     * @param string $checkFolder  Caso informado, checará se o nome gerado já não existe
+     *                              na pasta e gera outro até que o nome seja único
+     *                              (se $recursive for TRUE)
+     * @param   bool $recursive    Se TRUE, a função irá rodar até encontrar um nome único
+     *                              (só funciona com $checkFolder)
      *
      * @return string Nome único para arquivo
      */
@@ -133,21 +135,23 @@ class PublishController
      * ela será movida apenas caso esteja numa subpasta criada
      * pelo descompactador de arquivos zip/rar.
      *
-     * @param UploadedFile[]|\SplFileInfo[] $files Arquivos a serem movidos para a pasta do user
-     * @param float $orderInitial Ordenação individual que veio do request
-     * @return File[] Array de arquivos a serem processados.
+     * @param UploadedFile[]|\SplFileInfo[] $files         Arquivos a serem movidos para a pasta do user
+     * @param                         float $orderInitial  Ordenação individual que veio do request
+     *
+     * @return File[]  Array de arquivos a serem processados.
      *                  Cada arquivo terá uma order + 0.01, o que permite que um único arquivo
      *                  upado possa gerar até 99 arquivos preservando a ordenação correta.
+     *
      * @throws \InvalidArgumentException Caso $files não seja um array de \SplFileInfo
      */
     protected function moveImages(array $files, $orderInitial = 0)
     {
         $returnFiles = array();
         foreach ($files as $file) {
-            if ($file instanceof UploadedFile) {
+            /*if ($file instanceof UploadedFile) {
                 $newName = $this->generateImageName($file->getClientOriginalExtension());
                 $file = $file->move($this->path, $newName);
-            }
+            }*/
 
             if ($file instanceof \SplFileInfo) {
                 $src = rtrim($file->getPath(), '/') . '/';
@@ -155,13 +159,15 @@ class PublishController
 
                 $zipFolder = str_replace($dest, '', $src);
 
+                $newName = $this->generateImageName($file->getExtension());
+
                 // se o arquivo estiver em alguma subpasta (criada pelo zip)
                 // move-lo para a pasta raiz e apagar a pasta zip
                 if ($zipFolder) {
                     rename(
-                            $src . $file->getFilename(), $dest . $file->getFilename()
+                            $src . $file->getFilename(), $dest . $newName
                     );
-                    $file = new File($dest . $file->getFilename());
+                    $file = new File($dest . $newName);
                     @rmdir($src); // tenta apagar pasta
                 }
             }
@@ -193,6 +199,8 @@ class PublishController
 
         foreach ($files as $order => $file) {
             /* @var $file \SplFileInfo */
+
+            if (false === strpos($file->getExtension(), 'jpg')) continue;
 
             // volta o valor do ordem de string para float
             $order = (float)$order;
@@ -294,21 +302,138 @@ class PublishController
         foreach ($uploadedFiles as $file) {
             /* @var $file UploadedFile */
 
-            $processFiles = array();
-            if (strpos($file->getClientMimeType(), 'zip') !== false || $file->getClientMimeType() === 'application/octet-stream') {
-                // extract
-                $tmpZip = new TemporaryUnzipper($file, $this->path);
-                $processFiles = $tmpZip->getFiles();
-            }
-            else {
-                $processFiles[] = $file;
+            // primeiro, detecta se o arquivo que está sendo passado
+            // é um chunk ou um arquivo completo
+            $uploader = new Uploader($request, $file, $this->path);
+            $status = $uploader->upload();
+
+            switch (true) {
+                case $status === Uploader::PARTIAL:
+
+                    // se for parcial, só responder com json com nome do arquivo original
+                    $json[] = $this->formatFile(array(
+                        'arquivo' => $uploader->getOriginalFilename(),
+                    ));
+
+                    break;
+                case $status === Uploader::COMPLETE:
+
+                    // pega o arquivo completo
+                    $file = $uploader->getFile();
+
+                    $processFiles = array();
+                    if (strpos($file->getMimeType(), 'zip') !== false) {
+                        // extract
+                        $tmpZip = new TemporaryUnzipper($file, $this->path);
+                        $processFiles = $tmpZip->getFiles();
+                    }
+                    else {
+                        $processFiles[] = $file;
+                    }
+
+                    // move o(s) arquivo(s) uploadeados (no caso de zip, os arquivos extraidos
+                    $movedFiles = $this->moveImages($processFiles,
+                            (float)$request->request->get('order'));
+                    // formata as imagens no tamanho certo e divide páginas duplas
+                    $filteredFiles = $this->filterImages($movedFiles);
+
+                    foreach ($filteredFiles as $img) {
+                        if (!$id) {
+                            $affected = $this->db->executeUpdate('INSERT INTO p (bla, ordem, arquivo) VALUES (?,?,?)',
+                                    array(
+                                $request->request->get('bla'),
+                                $img['order'],
+                                $img['name'],
+                            ));
+
+                            $id = $this->db->lastInsertId();
+                        }
+                        else {
+                            $affected = $this->db->executeUpdate('UPDATE p SET bla = ?, ordem = ?, arquivo = ? WHERE id = ?',
+                                    array(
+                                $request->request->get('bla'),
+                                $img['order'],
+                                $img['name'],
+                                $id,
+                            ));
+                        }
+
+                        $json[] = $this->formatFile(array(
+                            'id' => $id,
+                            'ordem' => (float)$img['order'],
+                            'bla' => $request->request->get('bla'),
+                            'arquivo' => $img['name'],
+                        ));
+
+                        // evita que se salve na proxima imagem caso tenha duas a serem alteradas
+                        // a primeira deve fazer o update, e a proxima o insert ou
+                        // a primeira deve fazer o insert, e a proxima o insert
+                        $id = null;
+                    }
+
+                    break;
             }
 
-            // move o(s) arquivo(s) uploadeados (no caso de zip, os arquivos extraidos
-            $movedFiles = $this->moveImages($processFiles,
-                    (float)$request->request->get('order'));
-            // formata as imagens no tamanho certo e divide páginas duplas
-            $filteredFiles = $this->filterImages($movedFiles);
+            $range = $request->server->get('HTTP_CONTENT_RANGE', null);
+            $originalName = $request->server->get('HTTP_CONTENT_DISPOSITION', '"'.$file->getClientOriginalName().'"');
+            $originalName = substr($originalName,
+                    strpos($originalName, '"') + 1,
+                    strrpos($originalName, '"') - strpos($originalName, '"') - 1);
+            list(/*ignore*/,$rangeFrom, $rangeTo, $rangeTotal) = preg_split('/[^0-9]+/', $range);
+
+
+            if ($file->getSize() < (int)$rangeTotal) {
+                // chunk
+                file_put_contents(
+                    $this->path . $originalName,
+                    fopen($file->getPathname(), 'r'),
+                    FILE_APPEND
+                );
+
+                // pega o id caso o arquivo já tenha sido salvo antes (seja o segundo chunk)
+                $id = $this->db->fetchColumn('SELECT id FROM p WHERE arquivo = ?',
+                    array($originalName));
+
+                $file = new File($this->path . $originalName);
+
+            } else {
+                if (is_file($this->path . $originalName)) {
+                    $file = new File($this->path . $originalName);
+                } else {
+                    $file = $file->move($this->path, $originalName);
+                }
+            }
+            /* @var $file File */
+
+            $parcial = $file->getSize() < (int)$rangeTotal;
+
+            if ($parcial) {
+                // se for parcial, não tratar o arquivo em nada, apenas salvar na tabela
+                // para, caso seja preciso, continuar o upload de onde parou
+                $filteredFiles = array();
+                $filteredFiles[] = array(
+                    'order' => (float)$request->request->get('order'),
+                    'name' => $originalName,
+                );
+
+            } else {
+                $processFiles = array();
+                if (strpos($file->getMimeType(), 'zip') !== false) {
+                    // extract
+                    $tmpZip = new TemporaryUnzipper($file, $this->path);
+                    $processFiles = $tmpZip->getFiles();
+                }
+                else {
+                    $processFiles[] = $file;
+                }
+
+                // move o(s) arquivo(s) uploadeados (no caso de zip, os arquivos extraidos
+                $movedFiles = $this->moveImages($processFiles,
+                        (float)$request->request->get('order'));
+                // formata as imagens no tamanho certo e divide páginas duplas
+                $filteredFiles = $this->filterImages($movedFiles);
+
+            }
 
             foreach ($filteredFiles as $img) {
                 if (!$id) {
@@ -339,7 +464,8 @@ class PublishController
                 ));
 
                 // evita que se salve na proxima imagem caso tenha duas a serem alteradas
-                // uma deve sempre fazer o update, a outra o insert
+                // a primeira deve fazer o update, e a proxima o insert ou
+                // a primeira deve fazer o insert, e a proxima o insert
                 $id = null;
             }
         }

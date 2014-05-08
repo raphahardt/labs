@@ -4,6 +4,7 @@
         "knplabs/gaufrette": "*",
         "symfony/filesystem": "*",
         "symfony/finder": "*",
+        "symfony/validator": "*",
         "imagine/imagine": "*",
         "doctrine/orm": "~2",
         "monolog/monolog": ">=1.0.0",
