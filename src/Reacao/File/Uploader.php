@@ -74,17 +74,25 @@ class Uploader
                     FILE_APPEND
             );
 
-            //$file = new File($this->path . $originalName);
+            $parcialFile = new File($this->path . $originalName);
+            $this->completeFile = $parcialFile->getSize() < (int)$rangeTotal ? null : $parcialFile;
+
+            return null !== $this->completeFile ? self::COMPLETE : self::PARTIAL;
         }
         else {
             if (is_file($this->path . $originalName)) {
-                $file = new File($this->path . $originalName);
+                $this->completeFile = new File($this->path . $originalName);
             }
             else {
                 $this->completeFile = $this->uploadedFile->move($this->path, $originalName);
-                return self::COMPLETE;
             }
+            return self::COMPLETE;
         }
+    }
+
+    public function getCompleteFile()
+    {
+        return $this->completeFile;
     }
 
 }

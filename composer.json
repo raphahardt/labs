@@ -1,6 +1,7 @@
 {
     "require": {
         "silex/silex": "~1.2",
+        "silex/web-profiler": "v1.0.2",
         "knplabs/gaufrette": "*",
         "symfony/filesystem": "*",
         "symfony/finder": "*",
