@@ -143,4 +143,12 @@ $app->put('/upload/{id}', 'reacao.controller.publish:put');
 $app->post('/upload/{id}', 'reacao.controller.publish:post')->value('id', null);
 $app->delete('/upload/{id}', 'reacao.controller.publish:delete');
 
-$app->run();
+$app->error(function (Exception $e, $code) use ($app) {
+    if ($app['debug']) {
+        return;
+    }
+
+    return new Response($e->getMessage(), $code);
+});
+
+$app->run($request);

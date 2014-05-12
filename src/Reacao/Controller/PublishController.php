@@ -3,7 +3,6 @@
 namespace Reacao\Controller;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMException;
 use Imagine\Image\Box;
@@ -18,6 +17,7 @@ use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\ValidatorInterface;
 use TemporaryUnzipper;
 
 /**
@@ -55,6 +55,12 @@ class PublishController
      */
     protected $logger = null;
 
+    /**
+     *
+     * @var ValidatorInterface
+     */
+    protected $validator;
+
     public function __construct(Connection $db, Request $request, $path,
             ImagineInterface $imagine, EntityManagerInterface $em)
     {
@@ -64,6 +70,7 @@ class PublishController
         $this->basePath = $request->getSchemeAndHttpHost() . $request->getBasePath() . '/';
         $this->imagine = $imagine;
         $this->em = $em;
+        $this->validator = new \Symfony\Component\Validator\Validator();
     }
 
     public function setLogger(LoggerInterface $logger)
@@ -286,7 +293,18 @@ class PublishController
             $pag->setOrder($request->request->get('order', 0));
             $pag->setVotable($request->request->get('votable', true));
 
-            $this->em->flush();
+            $errors = $this->validator->validate($pag);
+            if (count($errors) > 0) {
+                $return = array();
+                foreach ($errors as $error) {
+                    $return[] = $error->getPropertyPath().' '.$error->getMessage();
+                }
+                return new JsonResponse(array('errors' => $return));
+
+            } else {
+                // nenhum erro de validação, salvar
+                $this->em->flush();
+            }
 
         } catch (ORMException $ex) {
             if (null !== $this->logger) {
@@ -368,7 +386,7 @@ class PublishController
                         break;
                 }
             }
-            
+
         } catch (ORMException $ex) {
             if (null !== $this->logger) {
                 $this->logger->alert($ex);

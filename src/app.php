@@ -1,6 +1,9 @@
 <?php
 
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
+use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\ArrayCache;
 use Reacao\Provider\ImagineServiceProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
@@ -10,6 +13,8 @@ use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
+use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
 
 $app = new Application();
 
@@ -19,6 +24,10 @@ $app->register(new TwigServiceProvider());
 $app->register(new ServiceControllerServiceProvider());
 $app->register(new ImagineServiceProvider());
 $app->register(new ValidatorServiceProvider());
+$app['validator.mapping.class_metadata_factory'] = $app->share(function ($app) {
+    $reader = new CachedReader(new AnnotationReader(), new ArrayCache());
+    return new ClassMetadataFactory(new AnnotationLoader($reader));
+});
 
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());

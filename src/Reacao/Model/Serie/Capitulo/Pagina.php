@@ -19,7 +19,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @author Raphael Hardt <raphael.hardt@gmail.com>
  *
  * @ORM\Entity
- * @ORM\HasLifecycleCallbacks
+ * @ORM\EntityListeners({"Reacao\Listener\Model\Serie\Capitulo\PaginaListener"})
  */
 class Pagina
 {
@@ -51,7 +51,7 @@ class Pagina
      *
      * @Assert\NotBlank
      */
-    //protected $capitulo;
+    protected $capitulo;
 
     /**
      *
@@ -111,8 +111,20 @@ class Pagina
      * )
      */
     private $file;
+
+    /**
+     * Guarda num cache o último arquivo salvo no banco, para depois
+     * de alterar a página, deletar a antiga imagem.
+     *
+     * @var string
+     */
     private $tempFilename;
 
+    /**
+     * Cache do diretório final onde as páginas serão salvas
+     *
+     * @var string
+     */
     private $folder;
 
     public function getId()
@@ -142,52 +154,19 @@ class Pagina
         }
     }
 
-    /**
-     * @ORM\PrePersist()
-     * @ORM\PreUpdate()
-     */
-    public function preUpload()
+    public function unsetFile()
     {
-        if (null !== $file = $this->getFile()) {
-            // do whatever you want to generate a unique name
-            $filename = sha1(uniqid(mt_rand(), true));
-            $this->filename = $filename.'.'.$file->guessExtension();
-        }
-    }
-
-    /**
-     * @ORM\PostPersist()
-     * @ORM\PostUpdate()
-     */
-    public function upload()
-    {
-        if (null === $this->getFile()) {
-            return;
-        }
-
-        // if there is an error when moving the file, an exception will
-        // be automatically thrown by move(). This will properly prevent
-        // the entity from being persisted to the database on error
-        $this->getFile()->move($this->getFolder(), $this->filename);
-
-        // check if we have an old image
-        if (isset($this->tempFilename)) {
-            // delete the old image
-            unlink($this->getFolder().'/'.$this->tempFilename);
-            // clear the temp image path
-            $this->tempFilename = null;
-        }
         $this->file = null;
     }
 
-    /**
-     * @ORM\PostRemove()
-     */
-    public function removeUpload()
+    public function getOldFilename()
     {
-        if ($file = $this->getAbsolutePath()) {
-            unlink($file);
-        }
+        return $this->tempFilename;
+    }
+
+    public function unsetOldFilename()
+    {
+        $this->tempFilename = null;
     }
 
     public function getFolder()

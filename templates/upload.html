@@ -9,6 +9,98 @@
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
         <!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
         <!--<link rel="stylesheet" href="css/jquery.fileupload.css">-->
+        <!-- Progress spinner-->
+        <style>
+            /* Make clicks pass-through */
+            .spinner, .bar {
+                pointer-events: none;
+                -webkit-pointer-events: none;
+            }
+
+            .bar {
+                background: #29d;
+
+                /*position: fixed;
+                z-index: 100;
+                top: 0;
+                left: 0;*/
+
+                width: 100%;
+                height: 2px;
+
+                -webkit-transition: all 200ms ease;
+                transition: all 200ms ease;
+            }
+
+            /* Fancy blur effect */
+            .bar .peg {
+                display: block;
+                position: absolute;
+                right: 0px;
+                width: 100px;
+                height: 100%;
+                box-shadow: 0 0 10px #29d, 0 0 5px #29d;
+                opacity: 1.0;
+
+                -webkit-transform: rotate(3deg) translate(0px, -4px);
+                -moz-transform: rotate(3deg) translate(0px, -4px);
+                -ms-transform: rotate(3deg) translate(0px, -4px);
+                -o-transform: rotate(3deg) translate(0px, -4px);
+                transform: rotate(3deg) translate(0px, -4px);
+            }
+
+            /* Remove these to get rid of the spinner */
+            .spinner {
+                display: inline-block;
+                z-index: 100;
+            }
+
+            .spinner .spinner-icon {
+                display:block;
+
+                width: 14px;
+                height: 14px;
+
+                border:  solid 2px transparent;
+                border-top-color:  #29d;
+                border-left-color: #29d;
+                border-radius: 12px;
+
+                -webkit-animation: nprogress-spinner 400ms linear infinite;
+                -moz-animation:    nprogress-spinner 400ms linear infinite;
+                -ms-animation:     nprogress-spinner 400ms linear infinite;
+                -o-animation:      nprogress-spinner 400ms linear infinite;
+                animation:         nprogress-spinner 400ms linear infinite;
+            }
+            .spinner.lg .spinner-icon {
+                width: 32px;
+                height: 32px;
+                border-width: 5px;
+                border-radius: 30px;
+            }
+
+            @-webkit-keyframes nprogress-spinner {
+                0%   { -webkit-transform: rotate(0deg);   transform: rotate(0deg); }
+                100% { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+            }
+            @-moz-keyframes nprogress-spinner {
+                0%   { -moz-transform: rotate(0deg);   transform: rotate(0deg); }
+                100% { -moz-transform: rotate(360deg); transform: rotate(360deg); }
+            }
+            @-o-keyframes nprogress-spinner {
+                0%   { -o-transform: rotate(0deg);   transform: rotate(0deg); }
+                100% { -o-transform: rotate(360deg); transform: rotate(360deg); }
+            }
+            @-ms-keyframes nprogress-spinner {
+                0%   { -ms-transform: rotate(0deg);   transform: rotate(0deg); }
+                100% { -ms-transform: rotate(360deg); transform: rotate(360deg); }
+            }
+            @keyframes nprogress-spinner {
+                0%   { transform: rotate(0deg);   transform: rotate(0deg); }
+                100% { transform: rotate(360deg); transform: rotate(360deg); }
+            }
+
+        </style>
         <style>
             .fileinput-button {
                 position: relative;
@@ -103,6 +195,7 @@
                 .page .preview img,
                 .page .preview canvas {
                     width:180px;
+                    opacity:0.053 !important;
                 }
                 .page .preview .preview-progress .back,
                 .page .preview .preview-progress .fore,
@@ -179,8 +272,8 @@
                     bottom: 0;
                     width: 180px;
                     padding: 10px;
-                    background: rgba(0,0,0,.6);
-                    color: #fff;
+                    background: rgba(0,0,0,.06);
+                    color: #000;
 
                 }
 
@@ -228,7 +321,7 @@
 
             </style>
             <!-- The file upload form used as target for the file upload widget -->
-            <form id="fileupload" action="./upload" method="POST" enctype="multipart/form-data" ng-app="demo" ng-controller="DemoFileUploadController" file-upload="options" ng-class="{'fileupload-processing': processing() || loadingFiles}">
+            <form id="fileupload" action="./upload" method="POST" enctype="multipart/form-data" ng-app="demo" ng-controller="DemoFileUploadController" file-upload="options" file-upload-extend ng-class="{'fileupload-processing': processing() || loadingFiles}">
                 <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
                 <div class="row fileupload-buttonbar">
                     <div class="col-lg-6">
@@ -250,16 +343,15 @@
                         <!-- The global file processing state -->
                         <span class="fileupload-process"></span>
                     </div>
+
                     <!-- The global progress state -->
                     <div class="col-lg-3 fade" data-ng-class="{in: active()}">
                         <!-- The global progress bar -->
-                        <div class="progress progress-striped active" data-file-upload-progress="progress()"><div class="progress-bar progress-bar-success" data-ng-style="{width: num + '%'}"></div></div>
-                        <!-- The extended global progress state -->
-                        <div class="progress-extended">&nbsp;</div>
+                        <div class="bar" role="bar" data-file-upload-progress="progress()" style="-webkit-transform: translate3d(-54.483824352268115%, 0px, 0px);"  data-ng-style="{'margin-left': (num - 100) + '%'}"><div class="peg"></div></div>
                     </div>
                     <div class="col-lg-3">
                         <div class="dropzone fade">
-                            Drop here
+                            Arraste aqui
                         </div>
                     </div>
                 </div>
@@ -306,8 +398,8 @@
                                 </div>
                             </div>
                             <div class="page-properties" ng-hide="!file.$save">
-                                <span class="loading fade" ng-class="{ pending: 'in' }[file.$state]">
-                                    <i class="fa fa-spin fa-clock-o"></i>
+                                <span class="loading fade spinner" role="spinner" ng-class="{ pending: 'in' }[file.$state]">
+                                    <span class="spinner-icon"></span>
                                 </span>
                                 <label ng-show="$odd && !$last">
                                     <input type="checkbox" ng-model="file.info.double">
@@ -438,71 +530,7 @@
 
                 var url = './upload';
 
-                angular.module('re.errorCatcher', [])
-                        .config([
-                            '$httpProvider',
-                            function($httpProvider) {
-                                $httpProvider.interceptors.push('errorHttpInterceptor');
-                            }
-                        ])
-
-                        .factory('errorHttpInterceptor', [
-                            '$q',
-                            function ($q) {
-                                return {
-                                    responseError: function responseError(rejection) {
-                                        console.log(rejection);
-                                        alert('Erro HTTP '+rejection.status+': '+rejection)
-                                        return $q.reject(rejection);
-                                    }
-                                };
-                            }
-                        ])
-
-                        .factory('$exceptionHandler', [
-                            function () {
-                                return function errorCatcherHandler(exception, cause) {
-                                    console.error(exception.stack);
-                                    console.log(exception);
-                                    alert('Erro fatal: '+exception.message + '(causado por '+cause+')');
-                                };
-                            }
-                        ])
-                        ;
-
-                angular.module('demo', [
-                    'ngAnimate',
-
-                    're.errorCatcher',
-                    'blueimp.fileupload',
-                    'ui.sortable'
-                ])
-                        .config([
-                            '$httpProvider', 'fileUploadProvider',
-                            function($httpProvider, fileUploadProvider) {
-                                delete $httpProvider.defaults.headers.common['X-Requested-With'];
-                                fileUploadProvider.defaults.redirect = window.location.href.replace(
-                                        /\/[^\/]*$/,
-                                        '/cors/result.html?%s'
-                                        );
-                                //if (isOnGitHub) {
-                                    // Demo settings:
-                                    angular.extend(fileUploadProvider.defaults, {
-                                        maxChunkSize: 2000000, // 2 MB
-                                        previewMaxWidth: 180,
-                                        previewMaxHeight: 0,
-                                        // Enable image resizing, except for Android and Opera,
-                                        // which actually support image resizing, but fail to
-                                        // send Blob objects via XHR requests:
-                                        disableImageResize: /Android(?!.*Chrome)|Opera/
-                                                .test(window.navigator.userAgent),
-                                        maxFileSize: 9000000,
-                                        acceptFileTypes: /(\.|\/)(gif|jpe?g|png|zip)$/i
-                                    });
-                                //}
-                            }
-                        ])
-
+                angular.module('debounce', [])
                         // http://unscriptable.com/2009/03/20/debouncing-javascript-methods/
                         // adapted from angular's $timeout code
                         .factory('$debounce', [
@@ -580,6 +608,77 @@
                                 return debounce;
                             }
                         ])
+                        ;
+
+                angular.module('re.errorhandler', [])
+                        .config([
+                            '$httpProvider',
+                            function($httpProvider) {
+                                $httpProvider.interceptors.push('errorHttpInterceptor');
+                                // coloca header de requested-with em todos os ajax do angular (necessario pra detectar via php)
+                                //$httpProvider.defaults.headers.common['X-Ajax'] = '1';
+                            }
+                        ])
+                        .factory('errorHttpInterceptor', [
+                            '$q',
+                            function ($q) {
+                                return {
+                                    responseError: function responseError(rejection) {
+                                        alert('Erro http: '+rejection.status+' : '+rejection.data);
+                                        console.log(rejection);
+                                        return $q.reject(rejection);
+                                    },
+                                    requestError: function requestError(rejection) {
+                                        alert('Erro http: '+rejection.status+' : '+rejection.data);
+                                        console.log(rejection);
+                                        return $q.reject(rejection);
+                                    }
+                                };
+                            }
+                        ])
+                        .factory('$exceptionHandler', [
+                            function () {
+                                return function (exception, cause) {
+                                    exception.message += ' (caused by "' + cause + '")';
+                                    alert(exception.message);
+                                    throw exception;
+                                };
+                            }
+                        ])
+                        ;
+
+                angular.module('demo', [
+                    're.errorhandler',
+                    'debounce',
+                    'ngAnimate',
+                    'blueimp.fileupload',
+                    'ui.sortable'
+                ])
+                        .config([
+                            '$httpProvider', 'fileUploadProvider',
+                            function($httpProvider, fileUploadProvider) {
+                                delete $httpProvider.defaults.headers.common['X-Requested-With'];
+                                fileUploadProvider.defaults.redirect = window.location.href.replace(
+                                        /\/[^\/]*$/,
+                                        '/cors/result.html?%s'
+                                        );
+                                //if (isOnGitHub) {
+                                    // Demo settings:
+                                    angular.extend(fileUploadProvider.defaults, {
+                                        maxChunkSize: 2000000, // 2 MB
+                                        previewMaxWidth: 180,
+                                        previewMaxHeight: 0,
+                                        // Enable image resizing, except for Android and Opera,
+                                        // which actually support image resizing, but fail to
+                                        // send Blob objects via XHR requests:
+                                        disableImageResize: /Android(?!.*Chrome)|Opera/
+                                                .test(window.navigator.userAgent),
+                                        maxFileSize: 9000000,
+                                        acceptFileTypes: /(\.|\/)(gif|jpe?g|png|zip)$/i
+                                    });
+                                //}
+                            }
+                        ])
 
                         .controller('DemoFileUploadController', [
                             '$scope', '$http',
@@ -606,20 +705,6 @@
                                         console.log('item sortable', item);
                                         $scope.$sorted = true;
                                         //console.log('sorteou', ui);
-                                    }
-                                };
-
-                                $scope.replace = function (oldFiles, newFiles) {
-                                    var queue = this.queue,
-                                        file = oldFiles[0],
-                                        i,
-                                        j;
-                                    for (i = 0; i < queue.length; i += 1) {
-                                        if (queue[i] === file) {
-                                            Array.prototype.splice.apply(queue, [i, 1].concat(newFiles));
-                                            // queue.splice(i, 1, newFile[0], newFile[1], ... newFile[n]);
-                                            return;
-                                        }
                                     }
                                 };
 
@@ -650,6 +735,33 @@
                                                     $scope.loadingFiles = false;
                                                 }
                                         );
+                            }
+                        ])
+
+                        .directive('fileUploadExtend', [
+                            function () {
+                                return {
+                                    restrict: 'A',
+                                    priority: -128, // executa por ultimo
+                                    link: function postLink($scope, $elem, $attrs) {
+                                        // aqui vai funcoes que sobrescrever algumas funcionalidades
+                                        // do fileupload para melhorar alguns aspectos (em vez de mexer
+                                        // no arquivo fonte
+                                        $scope.replace = function (oldFiles, newFiles) {
+                                            var queue = this.queue,
+                                                file = oldFiles[0],
+                                                i,
+                                                j;
+                                            for (i = 0; i < queue.length; i += 1) {
+                                                if (queue[i] === file) {
+                                                    Array.prototype.splice.apply(queue, [i, 1].concat(newFiles));
+                                                    // queue.splice(i, 1, newFile[0], newFile[1], ... newFile[n]);
+                                                    return;
+                                                }
+                                            }
+                                        };
+                                    }
+                                };
                             }
                         ])
 

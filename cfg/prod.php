@@ -7,7 +7,7 @@ $app['db.options'] = array(
     'host' => 'localhost',
     'dbname' => 'fastmotors',
     'user' => 'root',
-    'password' => 'lkglby90',
+    'password' => '',
     /*
       'dbname'    => 'reacaoed_main',
       'user'      => 'reacaoed_root',
@@ -47,4 +47,14 @@ $app['orm.em.options'] = array(
 $app['twig.path'] = array(__DIR__.'/../templates');
 //$app['twig.options'] = array('cache' => __DIR__.'/../var/cache/twig');
 
-$app['path.public'] = __DIR__.'/public/';
+// pasta
+$app['upload.base_path'] = $app->share(function () {
+    return dirname(__DIR__).'/web/public';
+});
+$app['upload.path'] = $app->share(function () use ($app) {
+    $dir = $app['upload.base_path'] . '/tmp';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0777);
+    }
+    return $dir;
+});
