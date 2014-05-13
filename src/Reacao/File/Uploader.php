@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Classe Uploader
  *
- * @author Sistema13 <sistema13@furacao.com.br>
  */
 class Uploader
 {

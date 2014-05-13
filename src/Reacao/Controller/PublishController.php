@@ -9,7 +9,6 @@ use Imagine\Image\Box;
 use Imagine\Image\ImagineInterface;
 use Imagine\Image\Point;
 use Psr\Log\LoggerInterface;
-use Reacao\Exception\FileAlreadyExistsException;
 use Reacao\File\Uploader;
 use Reacao\Model\Serie\Capitulo\Pagina;
 use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
@@ -17,6 +16,7 @@ use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Validator;
 use Symfony\Component\Validator\ValidatorInterface;
 use TemporaryUnzipper;
 
@@ -70,7 +70,7 @@ class PublishController
         $this->basePath = $request->getSchemeAndHttpHost() . $request->getBasePath() . '/';
         $this->imagine = $imagine;
         $this->em = $em;
-        $this->validator = new \Symfony\Component\Validator\Validator();
+        $this->validator = new Validator();
     }
 
     public function setLogger(LoggerInterface $logger)
@@ -101,42 +101,6 @@ class PublishController
             "deleteUrl" => $this->basePath . 'upload/' . $pag->getId(),
             "deleteType" => "DELETE"
         );
-    }
-
-    /**
-     * Gera um nome único para um arquivo, baseado em sua extensão.
-     *
-     * O nome é aleatório com 7 digitos. Se quiser aumentar a confiabilidade
-     * de que o nome gerado não irá substituir outro arquivo com nome igual,
-     * passe um path no $checkFolder.
-     *
-     * @param string $extension    Extensão do arquivo (ex: jpg, gif, png)
-     * @param string $checkFolder  Caso informado, checará se o nome gerado já não existe
-     *                              na pasta e gera outro até que o nome seja único
-     *                              (se $recursive for TRUE)
-     * @param   bool $recursive    Se TRUE, a função irá rodar até encontrar um nome único
-     *                              (só funciona com $checkFolder)
-     *
-     * @return string Nome único para arquivo
-     */
-    protected function generateImageName($extension = 'jpg', $checkFolder = null,
-            $recursive = true)
-    {
-        $name = mt_rand(1000000, 9999999) . '.' . $extension;
-        if (!empty($checkFolder)) {
-            if (is_file(rtrim($checkFolder, '/') . '/' . $name)) {
-                if ($recursive) {
-                    // tenta gerar outro nome até encontrar um realmente único
-                    return $this->generateImageName($extension, $checkFolder, $recursive);
-                }
-                else {
-                    // arquivo ja existe, lançar exceção para ser tratada fora
-                    throw new FileAlreadyExistsException(sprintf('%s already exists in folder %s',
-                            $name, $checkFolder));
-                }
-            }
-        }
-        return $name;
     }
 
     /**
@@ -264,6 +228,18 @@ class PublishController
         return $imagesToSave;
     }
 
+    protected function logError(\Exception $exception)
+    {
+        if (null !== $this->logger) {
+
+            switch (true) {
+                case $exception instanceof ORMException:
+                    $this->logger->alert($exception);
+                    break;
+            }
+        }
+    }
+
     public function get()
     {
         $json = array();
@@ -274,13 +250,13 @@ class PublishController
                 $json[] = $this->formatFile($p);
             }
 
-        } catch (ORMException $ex) {
-            if (null !== $this->logger) {
-                $this->logger->alert($ex);
-            }
+            return new JsonResponse(array('files' => $json));
+
+        } catch (\Exception $e) {
+            $this->logError($e);
+            return new JsonResponse(array('errors' => array($e->getMessage())));
         }
 
-        return new JsonResponse(array('files' => $json));
     }
 
     public function put(Request $request, $id)
@@ -299,6 +275,7 @@ class PublishController
                 foreach ($errors as $error) {
                     $return[] = $error->getPropertyPath().' '.$error->getMessage();
                 }
+
                 return new JsonResponse(array('errors' => $return));
 
             } else {
@@ -306,13 +283,12 @@ class PublishController
                 $this->em->flush();
             }
 
-        } catch (ORMException $ex) {
-            if (null !== $this->logger) {
-                $this->logger->alert($ex);
-            }
-        }
+            return new JsonResponse($this->formatFile($pag));
 
-        return new JsonResponse($this->formatFile($pag));
+        } catch (\Exception $e) {
+            $this->logError($e);
+            return new JsonResponse(array('errors' => array($e->getMessage())));
+        }
     }
 
     public function post(Request $request, $id = null)

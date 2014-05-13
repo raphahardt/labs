@@ -7,6 +7,7 @@ use Doctrine\Common\Cache\ArrayCache;
 use Reacao\Provider\ImagineServiceProvider;
 use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
+use Silex\Provider\SecurityServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\TwigServiceProvider;
@@ -31,6 +32,8 @@ $app['validator.mapping.class_metadata_factory'] = $app->share(function ($app) {
 
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());
+
+$app->register(new SecurityServiceProvider());
 
 /*
  * para tratar POSTs que vem como json

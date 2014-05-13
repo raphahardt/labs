@@ -14,7 +14,6 @@ use Silex\ServiceProviderInterface;
 /**
  * Classe ImagineServiceProvider
  *
- * @author Sistema13 <sistema13@furacao.com.br>
  */
 class ImagineServiceProvider implements ServiceProviderInterface
 {

@@ -6,6 +6,7 @@
         "symfony/filesystem": "*",
         "symfony/finder": "*",
         "symfony/validator": "*",
+        "symfony/security": "*",
         "imagine/imagine": "*",
         "doctrine/orm": "~2",
         "monolog/monolog": ">=1.0.0",

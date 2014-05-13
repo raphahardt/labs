@@ -2,6 +2,7 @@
 
 date_default_timezone_set('America/Sao_paulo');
 
+// Database
 $app['db.options'] = array(
     'driver' => 'mysqli',
     'host' => 'localhost',
@@ -15,6 +16,7 @@ $app['db.options'] = array(
     'charset' => 'utf8',
 );
 
+// ORM
 $app['orm.proxies_dir'] = __DIR__ . "/../var/orm/proxies";
 $app['orm.default_cache'] = array(
     "driver" => (!function_exists('apc_fetch') ? "filesystem" : "apc"),
@@ -44,12 +46,40 @@ $app['orm.em.options'] = array(
     ),
 );
 
-$app['twig.path'] = array(__DIR__.'/../templates');
+// Security
+$app['security.firewalls'] = array(
+    'firewall_profiler' => array(
+        'pattern' => '^/_profiler.*$',
+        'security' => false,
+    ),
+    'frw_site' => array(
+        'pattern' => '^.*$',
+        //'form' => array('login_path' => '/login', 'check_path' => '/auth'),
+        //'logout' => array('logout_path' => '/logout'),
+        'anonymous' => true,
+        'users' => $app->share(function () use ($app) {
+            return $app['orm.em']->getRepository('Reacao\Model\Usuario');
+        }),
+    ),
+);
+$app['security.role_hierarchy'] = array(
+    'ROLE_ADMIN' => array('ROLE_COLAB', 'ROLE_JORN', 'ROLE_AUTOR'),
+    'ROLE_JORN' => array('ROLE_AUTOR', 'ROLE_COLAB'),
+    'ROLE_COLAB' => array('ROLE_AUTOR'),
+    'ROLE_AUTOR' => array('IS_AUTHENTICATED_ANONYMOUSLY'),
+);
+$app['security.access_rules'] = array(
+    array('^/admin', 'ROLE_ADMIN', 'http'),
+    //array('^.*$', 'IS_AUTHENTICATED_ANONYMOUSLY'),
+);
+
+// Paths
+$app['twig.path'] = array(__DIR__ . '/../templates');
 //$app['twig.options'] = array('cache' => __DIR__.'/../var/cache/twig');
 
-// pasta
+// Uploader
 $app['upload.base_path'] = $app->share(function () {
-    return dirname(__DIR__).'/web/public';
+    return dirname(__DIR__) . '/web/public';
 });
 $app['upload.path'] = $app->share(function () use ($app) {
     $dir = $app['upload.base_path'] . '/tmp';

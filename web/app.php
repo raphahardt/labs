@@ -135,13 +135,34 @@ $app['reacao.controller.publish'] = function () use ($app) {
 };
 
 $app->get('/', function () use ($app) {
-    return file_get_contents($app['twig.path'][0].'/upload.html');
+    $content = '';
+    var_dump($app['security']->getToken()->getUser());
+    var_dump($app['security']->isGranted('IS_AUTHENTICATED_ANONYMOUSLY'));
+    var_dump($app['security']->isGranted('ROLE_AUTOR'));
+    $content .= file_get_contents($app['twig.path'][0].'/upload.html');
+    return $content;
 });
 
 $app->get('/upload', 'reacao.controller.publish:get');
 $app->put('/upload/{id}', 'reacao.controller.publish:put');
 $app->post('/upload/{id}', 'reacao.controller.publish:post')->value('id', null);
 $app->delete('/upload/{id}', 'reacao.controller.publish:delete');
+
+$app->get('/admin', function () use ($app) {
+    return 'olá, '.$app['security']->getToken()->getUser()->getUsername();
+});
+
+$app->get('/login', function () use ($app) {
+    var_dump($app['security']->isGranted('IS_AUTHENTICATED_ANONYMOUSLY'));
+    var_dump($app['security']->isGranted('ROLE_AUTOR'));
+    return 'faça o login';
+});
+
+$app->error(function (\Doctrine\ORM\ORMException $e, $code) use ($app) {
+    if (isset($app['logger'])) {
+        $app['logger']->alert($e);
+    }
+});
 
 $app->error(function (Exception $e, $code) use ($app) {
     if ($app['debug']) {

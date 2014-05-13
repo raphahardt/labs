@@ -11,8 +11,6 @@ namespace Reacao\Exception;
 /**
  * Classe FileAlreadyExistsException
  *
- * @author Sistema13 <sistema13@furacao.com.br>
- *
  * @todo extender classe de alguma outra relacionada a arquivos (talvez FileException do symfony)
  */
 class FileAlreadyExistsException extends \Exception
