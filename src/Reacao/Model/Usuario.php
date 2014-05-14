@@ -32,6 +32,7 @@ class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializabl
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue
      */
     private $id;
 

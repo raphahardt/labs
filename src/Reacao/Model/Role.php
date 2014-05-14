@@ -21,6 +21,7 @@ class Role implements RoleInterface
     /**
      * @ORM\Id
      * @ORM\Column(name="id", type="integer")
+     * @ORM\GeneratedValue
      */
     private $id;
 
