@@ -54,8 +54,8 @@ $app['security.firewalls'] = array(
     ),
     'frw_site' => array(
         'pattern' => '^.*$',
-        //'form' => array('login_path' => '/login', 'check_path' => '/auth'),
-        //'logout' => array('logout_path' => '/logout'),
+        'form' => array('login_path' => '/login', 'check_path' => '/auth'),
+        'logout' => array('logout_path' => '/logout'),
         'anonymous' => true,
         'users' => $app->share(function () use ($app) {
             return $app['orm.em']->getRepository('Reacao\Model\Usuario');

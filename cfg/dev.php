@@ -11,6 +11,9 @@ $app['debug'] = true;
 
 $app['orm.default_cache'] = 'array';
 
+// ajuda a mostrar qual é o problema com o usuário
+$app['security.hide_user_not_found'] = false;
+
 $app->register(new MonologServiceProvider(), array(
     'monolog.logfile' => __DIR__.'/../var/logs/app_dev.log',
 ));

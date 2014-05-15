@@ -35,6 +35,15 @@ $app->register(new DoctrineOrmServiceProvider());
 
 $app->register(new SecurityServiceProvider());
 
+/*$app['twig'] = $app->share($app->extend('twig', function ($twig) use ($app) {
+    /* @var $twig \Twig_Environment * /
+    $function = new Twig_SimpleFunction('include_html', function (Twig_Environment $env, $file) {
+
+    }, array('needs_environment' => true));
+    $twig->addFunction($function);
+    return $twig;
+}));*/
+
 /*
  * para tratar POSTs que vem como json
  * ver: http://silex.sensiolabs.org/doc/cookbook/json_request_body.html

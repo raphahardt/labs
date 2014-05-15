@@ -136,9 +136,6 @@ $app['reacao.controller.publish'] = function () use ($app) {
 
 $app->get('/', function () use ($app) {
     $content = '';
-    var_dump($app['security']->getToken()->getUser());
-    var_dump($app['security']->isGranted('IS_AUTHENTICATED_ANONYMOUSLY'));
-    var_dump($app['security']->isGranted('ROLE_AUTOR'));
     $content .= file_get_contents($app['twig.path'][0].'/upload.html');
     return $content;
 });
@@ -152,10 +149,26 @@ $app->get('/admin', function () use ($app) {
     return 'olá, '.$app['security']->getToken()->getUser()->getUsername();
 });
 
-$app->get('/login', function () use ($app) {
+$app->get('/login', function (Request $request) use ($app) {
     var_dump($app['security']->isGranted('IS_AUTHENTICATED_ANONYMOUSLY'));
-    var_dump($app['security']->isGranted('ROLE_AUTOR'));
-    return 'faça o login';
+    var_dump($app['security']->isGranted('ROLE_ADMIN'));
+
+    /* @var $em Doctrine\ORM\EntityManagerInterface */
+    /*$em = $app['orm.em'];
+    $role = new \Reacao\Model\Usuario\Administrador();
+    //$role = $em->find(get_class(new \Reacao\Model\Usuario\Administrador), 1);
+    $pass = $app['security.encoder_factory']->getEncoder($role)->encodePassword('123', $role->getSalt());
+    $role->setPassword($pass);
+    $role->setUsername('teste');
+    $role->setEmail('admin@admin.adm');
+
+    $em->persist($role);
+    $em->flush();/**/
+
+    return $app['twig']->render('login.twig', array(
+        'error'         => $app['security.last_error']($request),
+        'last_username' => $app['session']->get('_security.last_username'),
+    ));
 });
 
 $app->error(function (\Doctrine\ORM\ORMException $e, $code) use ($app) {

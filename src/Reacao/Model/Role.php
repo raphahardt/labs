@@ -21,6 +21,7 @@ class Role implements RoleInterface
     /**
      * @ORM\Id
      * @ORM\Column(name="id", type="integer")
+     * @ORM\GeneratedValue
      */
     private $id;
 
@@ -37,11 +38,16 @@ class Role implements RoleInterface
     /**
      * @ORM\ManyToMany(targetEntity="Usuario", mappedBy="roles")
      */
-    private $users;
+    private $usuarios;
 
     public function __construct()
     {
-        $this->users = new ArrayCollection();
+        $this->usuarios = new ArrayCollection();
+    }
+
+    public function getId()
+    {
+        return $this->id;
     }
 
     /**
@@ -50,6 +56,30 @@ class Role implements RoleInterface
     public function getRole()
     {
         return $this->role;
+    }
+
+    public function setRole($role)
+    {
+        $role = strtoupper($role);
+        if (0 !== strpos($role, 'ROLE_')) {
+            throw new \InvalidArgumentException(sprintf('Roles devem começar com "ROLE_" (obtido: %s)', $role));
+        }
+        $this->role = $role;
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function setName($name)
+    {
+        $this->name = $name;
+    }
+
+    public function getUsuarios()
+    {
+        return $this->usuarios;
     }
 
 }

@@ -19,18 +19,20 @@ class Administrador extends Usuario
 
     /**
      *
-     * @param Usuario $user
      * @param LifecycleEventArgs $event
      *
-     * @ORM\PostLoad
+     * @ORM\PrePersist
+     * @ORM\PreUpdate
      */
-    public function postLoad(LifecycleEventArgs $event)
+    public function presetRoles(LifecycleEventArgs $event)
     {
         $em = $event->getEntityManager();
+        /* @var $role Role */
         $role = $em->getRepository(get_class(new Role))->findOneBy(array('role' => 'ROLE_ADMIN'));
 
         if (null !== $role && !$this->roles->contains($role)) {
             $this->roles->add($role);
+            $role->getUsuarios()->add($this);
         }
     }
 

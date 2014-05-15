@@ -32,6 +32,7 @@ class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializabl
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue
      */
     private $id;
 
@@ -43,11 +44,16 @@ class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializabl
     private $username;
 
     /**
-     * @ORM\Column(type="string", length=64)
+     * @ORM\Column(type="string", length=128)
      *
      * @Assert\NotBlank
      */
     private $password;
+
+    /**
+     * @ORM\Column(type="string", length=64, unique=true)
+     */
+    private $salt;
 
     /**
      * @ORM\Column(type="string", length=60, unique=true)
@@ -71,7 +77,12 @@ class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializabl
         $this->roles = new ArrayCollection();
         $this->isActive = true;
         // may not be needed, see section on salt below
-        // $this->salt = md5(uniqid(null, true));
+        $this->salt = md5(uniqid(null, true));
+    }
+
+    public function getId()
+    {
+        return $this->id;
     }
 
     public function getUsername()
@@ -79,11 +90,16 @@ class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializabl
         return $this->username;
     }
 
+    public function setUsername($username)
+    {
+        $this->username = $username;
+    }
+
     public function getSalt()
     {
         // you *may* need a real salt depending on your encoder
         // see section on salt below
-        return null;
+        return $this->salt;
     }
 
     /**
@@ -92,6 +108,21 @@ class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializabl
     public function getPassword()
     {
         return $this->password;
+    }
+
+    public function setPassword($password)
+    {
+        $this->password = $password;
+    }
+
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
+    public function setEmail($email)
+    {
+        $this->email = $email;
     }
 
     public function getRoles()
@@ -133,8 +164,8 @@ class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializabl
             $this->id,
             $this->username,
             $this->password,
-                // see section on salt below
-                // $this->salt,
+            // see section on salt below
+            $this->salt,
         ));
     }
 
@@ -148,7 +179,7 @@ class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializabl
                 $this->username,
                 $this->password,
                 // see section on salt below
-                // $this->salt
+                $this->salt
                 ) = unserialize($serialized);
     }
 

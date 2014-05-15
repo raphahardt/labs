@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 namespace Reacao\Model;
 
 use Doctrine\ORM\EntityRepository;
@@ -17,23 +11,26 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 class UsuarioRepository extends EntityRepository implements UserProviderInterface
 {
+
     public function loadUserByUsername($username)
     {
         $q = $this
-            ->createQueryBuilder('u')
-            ->where('u.username = :username OR u.email = :email')
-            ->setParameter('username', $username)
-            ->setParameter('email', $username)
-            ->getQuery();
-
+                ->createQueryBuilder('u')
+                //->where('u.username = :username OR u.email = :email')
+                ->where('u.username = :username')
+                ->setParameter('username', $username)
+                //->setParameter('email', $username)
+                ->getQuery();
+        
         try {
             // The Query::getSingleResult() method throws an exception
             // if there is no record matching the criteria.
             $user = $q->getSingleResult();
         } catch (NoResultException $e) {
+
             $message = sprintf(
-                'Unable to find an active admin AcmeUserBundle:User object identified by "%s".',
-                $username
+                    'Unable to find an active admin AcmeUserBundle:User object identified by "%s".',
+                    $username
             );
             throw new UsernameNotFoundException($message, 0, $e);
         }
@@ -46,10 +43,7 @@ class UsuarioRepository extends EntityRepository implements UserProviderInterfac
         $class = get_class($user);
         if (!$this->supportsClass($class)) {
             throw new UnsupportedUserException(
-                sprintf(
-                    'Instances of "%s" are not supported.',
-                    $class
-                )
+            sprintf('Instances of "%s" are not supported.', $class)
             );
         }
 
@@ -58,7 +52,8 @@ class UsuarioRepository extends EntityRepository implements UserProviderInterfac
 
     public function supportsClass($class)
     {
-        return $this->getEntityName() === $class
-            || is_subclass_of($class, Usuario);
+        return $this->getEntityName() === $class || is_subclass_of($class,
+                        'Reacao\Model\Usuario');
     }
+
 }
