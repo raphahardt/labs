@@ -244,7 +244,7 @@ class PublishController
     {
         $json = array();
         try {
-            $pags = $this->em->getRepository('Reacao\Model\Serie\Capitulo\Pagina')->findAll();
+            $pags = $this->em->getRepository(get_class(new Pagina))->findAll();
 
             foreach ($pags as $p) {
                 $json[] = $this->formatFile($p);
@@ -263,7 +263,7 @@ class PublishController
     {
         try {
             /* @var $pag Pagina */
-            $pag = $this->em->find('Reacao\Model\Serie\Capitulo\Pagina', (int)$id);
+            $pag = $this->em->find(get_class(new Pagina), (int)$id);
 
             $pag->setDoublePage($request->request->get('double', false));
             $pag->setOrder($request->request->get('order', 0));
@@ -344,12 +344,26 @@ class PublishController
 
                         foreach ($filteredFiles as $img) {
                             /* @var $pag Pagina */
-                            $pag = $id ? $this->em->find('Reacao\Model\Serie\Capitulo\Pagina', $id) : new Pagina();
+                            $pag = $id ? $this->em->find(get_class(new Pagina), $id) : new Pagina();
 
                             $pag->setFile($img['file']);
                             $pag->setDoublePage($img['double']);
                             $pag->setOrder($img['order']);
                             $pag->setVotable($request->request->get('votable', true));
+
+                            $errors = $this->validator->validate($pag);
+                            if (count($errors) > 0) {
+                                $return = array();
+                                foreach ($errors as $error) {
+                                    $return[] = $error->getPropertyPath().' '.$error->getMessage();
+                                }
+
+                                return new JsonResponse(array('errors' => $return));
+
+                            } else {
+                                // nenhum erro de validação, salvar
+                                $this->em->persist($pag);
+                            }
 
                             $json[] = $this->formatFile($pag);
 
@@ -358,18 +372,19 @@ class PublishController
                             // a primeira deve fazer o insert, e a proxima o insert
                             $id = null;
                         }
+                        $this->em->flush();
 
                         break;
                 }
             }
 
-        } catch (ORMException $ex) {
-            if (null !== $this->logger) {
-                $this->logger->alert($ex);
-            }
+            return new JsonResponse(array('files' => $json));
+
+        } catch (\Exception $e) {
+            $this->logError($e);
+            return new JsonResponse(array('errors' => array($e->getMessage())));
         }
 
-        return new JsonResponse(array('files' => $json));
     }
 
     public function delete(Request $request, $id)
@@ -377,20 +392,20 @@ class PublishController
         $files = array();
         try {
             /* @var $pag Pagina */
-            $pag = $this->em->getReference('Reacao\Model\Serie\Capitulo\Pagina', (int)$id);
+            $pag = $this->em->getReference(get_class(new Pagina), (int)$id);
 
             $this->em->remove($pag);
             $this->em->flush();
 
             $files[] = array($id => true);
 
-        } catch (ORMException $ex) {
-            if (null !== $this->logger) {
-                $this->logger->alert($ex);
-            }
+            return new JsonResponse(array('files' => $files));
+
+        } catch (\Exception $e) {
+            $this->logError($e);
+            return new JsonResponse(array('errors' => array($e->getMessage())));
         }
 
-        return new JsonResponse(array('files' => $files));
     }
 
 }

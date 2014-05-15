@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "5ed5e2dd2f904589b0e620e264e7a371",
+    "hash": "3f55e12755303f8bdc2ff2221e81373a",
     "packages": [
         {
             "name": "dflydev/doctrine-orm-service-provider",
