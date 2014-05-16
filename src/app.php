@@ -35,6 +35,14 @@ $app->register(new DoctrineOrmServiceProvider());
 
 $app->register(new SecurityServiceProvider());
 
+$app['file.uploader'] = $this->share(function () use ($app) {
+    return new \Reacao\File\Uploader($app['request'], $app['file.upload.base_path']);
+});
+
+$app['file.unpacker'] = $this->share(function () use ($app) {
+    return new \Reacao\File\Unpacker($app['file.upload.base_path'].'/unpacked_tmp');
+});
+
 /*$app['twig'] = $app->share($app->extend('twig', function ($twig) use ($app) {
     /* @var $twig \Twig_Environment * /
     $function = new Twig_SimpleFunction('include_html', function (Twig_Environment $env, $file) {

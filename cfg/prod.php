@@ -78,13 +78,4 @@ $app['twig.path'] = array(__DIR__ . '/../templates');
 //$app['twig.options'] = array('cache' => __DIR__.'/../var/cache/twig');
 
 // Uploader
-$app['upload.base_path'] = $app->share(function () {
-    return dirname(__DIR__) . '/web/public';
-});
-$app['upload.path'] = $app->share(function () use ($app) {
-    $dir = $app['upload.base_path'] . '/tmp';
-    if (!is_dir($dir)) {
-        mkdir($dir, 0777);
-    }
-    return $dir;
-});
+$app['file.upload.base_path'] = dirname(__DIR__) . '/web/public';

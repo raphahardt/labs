@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 namespace Reacao\File;
 
 use Symfony\Component\HttpFoundation\File\File;
@@ -24,12 +18,6 @@ class Uploader
 
     /**
      *
-     * @var UploadedFile
-     */
-    protected $uploadedFile;
-
-    /**
-     *
      * @var File
      */
     protected $completeFile;
@@ -44,14 +32,13 @@ class Uploader
 
     protected $validator;
 
-    public function __construct(Request $request, UploadedFile $file, $path)
+    public function __construct(Request $request, $path)
     {
-        $this->uploadedFile = $file;
         $this->request = $request;
         $this->path = $path;
     }
 
-    public function upload()
+    public function upload(UploadedFile $uploadedFile)
     {
         // pega o range-content (Content-Range: bytes 0-123/400)
         $range = $this->request->server->get('HTTP_CONTENT_RANGE', null);
@@ -60,16 +47,16 @@ class Uploader
 
         // pega o nome do arquivo (pode estar no Content-Disposition: attachment; filename="x")
         $name = $this->request->server->get('HTTP_CONTENT_DISPOSITION',
-                '"' . $this->uploadedFile->getClientOriginalName() . '"');
+                '"' . $uploadedFile->getClientOriginalName() . '"');
         $originalName = substr($name,
                 strpos($name, '"') + 1,
                 strrpos($name, '"') - strpos($name, '"') - 1);
 
-        if ($this->uploadedFile->getSize() < (int)$rangeTotal) {
+        if ($uploadedFile->getSize() < (int)$rangeTotal) {
             // chunk
             file_put_contents(
                     $this->path . $originalName,
-                    fopen($this->uploadedFile->getPathname(), 'r'),
+                    fopen($uploadedFile->getPathname(), 'r'),
                     FILE_APPEND
             );
 
@@ -83,7 +70,7 @@ class Uploader
                 $this->completeFile = new File($this->path . $originalName);
             }
             else {
-                $this->completeFile = $this->uploadedFile->move($this->path, $originalName);
+                $this->completeFile = $uploadedFile->move($this->path, $originalName);
             }
             return self::COMPLETE;
         }
