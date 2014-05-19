@@ -1,0 +1,32 @@
+<?php
+
+use Assetic\Asset\FileAsset;
+
+$base_path = dirname(__DIR__);
+$bower_path = $base_path.'/bower_components';
+
+return array(
+    'jquery' => new FileAsset($bower_path.'/jquery/dist/jquery.js'),
+    'jquery_ui' => new FileAsset($bower_path.'/jquery-ui/ui/jquery-ui.js'),
+    'angularjs' => array(
+        new FileAsset($bower_path.'/angular/angular.js'),
+        new FileAsset($bower_path.'/angular-animate/angular-animate.js'),
+    ),
+    'angular_sortable' => array(
+        'angularjs',
+        'jquery_ui',
+        new FileAsset($bower_path.'/angular-ui-sortable/sortable.js'),
+    ),
+    'blueimp_fileupload' => array(
+        'angularjs',
+        'jquery_ui',
+        new FileAsset($bower_path.'/blueimp-load-image/js/load-image.min.js'),
+        new FileAsset($bower_path.'/blueimp-canvas-to-blob/js/canvas-to-blob.js'),
+        new FileAsset($bower_path.'/blueimp-file-upload/js/jquery.iframe-transport.js'),
+        new FileAsset($bower_path.'/blueimp-file-upload/js/jquery.fileupload.js'),
+        new FileAsset($bower_path.'/blueimp-file-upload/js/jquery.fileupload-process.js'),
+        new FileAsset($bower_path.'/blueimp-file-upload/js/jquery.fileupload-image.js'),
+        new FileAsset($bower_path.'/blueimp-file-upload/js/jquery.fileupload-validate.js'),
+        new FileAsset($bower_path.'/blueimp-file-upload/js/jquery.fileupload-angular.js'),
+    ),
+);

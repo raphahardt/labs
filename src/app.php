@@ -35,11 +35,13 @@ $app->register(new DoctrineOrmServiceProvider());
 
 $app->register(new SecurityServiceProvider());
 
-$app['file.uploader'] = $this->share(function () use ($app) {
+$app->register(new Reacao\Provider\AsseticServiceProvider());
+
+$app['file.uploader'] = $app->share(function () use ($app) {
     return new \Reacao\File\Uploader($app['request'], $app['file.upload.base_path']);
 });
 
-$app['file.unpacker'] = $this->share(function () use ($app) {
+$app['file.unpacker'] = $app->share(function () use ($app) {
     return new \Reacao\File\Unpacker($app['file.upload.base_path'].'/unpacked_tmp');
 });
 

@@ -1,5 +1,13 @@
 {# empty Twig template #}
 
+{#
+{% javascripts '@blueimp_fileupload' output="js/teste.js" %}
+    <script src="{{ asset_url }}"></script>
+{% endjavascripts %}
+#}
+
+{{ app.request.basepath }}
+
 <form action="{{ path('auth') }}" method="post">
     {{ error }}
     <input type="text" name="_username" value="{{ last_username }}" />

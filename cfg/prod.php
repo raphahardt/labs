@@ -16,6 +16,14 @@ $app['db.options'] = array(
     'charset' => 'utf8',
 );
 
+// Assets
+$app['assetic.source_path'] = __DIR__.'/public';
+$app['assetic.dist_path'] = __DIR__.'/../web/js';
+$app['assetic.assets'] = require __DIR__.'/assets.php';
+$app['assetic.filters'] = array(
+    'jsmin' => new \Assetic\Filter\JSMinPlusFilter()
+);
+
 // ORM
 $app['orm.proxies_dir'] = __DIR__ . "/../var/orm/proxies";
 $app['orm.default_cache'] = array(
