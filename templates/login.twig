@@ -1,10 +1,8 @@
 {# empty Twig template #}
 
-{#
-{% javascripts '@blueimp_fileupload' output="js/teste.js" %}
+{% javascripts '@jquery' output="js/teste.js" debug=false %}
     <script src="{{ asset_url }}"></script>
 {% endjavascripts %}
-#}
 
 {{ app.request.basepath }}
 

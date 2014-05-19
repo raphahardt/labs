@@ -18,7 +18,7 @@ $app['db.options'] = array(
 
 // Assets
 $app['assetic.source_path'] = __DIR__.'/public';
-$app['assetic.dist_path'] = __DIR__.'/../web/js';
+$app['assetic.dist_path'] = __DIR__.'/../web';
 $app['assetic.assets'] = require __DIR__.'/assets.php';
 $app['assetic.filters'] = array(
     'jsmin' => new \Assetic\Filter\JSMinPlusFilter()

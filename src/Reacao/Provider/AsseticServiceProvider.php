@@ -6,12 +6,16 @@ use Assetic\Asset\AssetCollection;
 use Assetic\Asset\AssetInterface;
 use Assetic\Asset\AssetReference;
 use Assetic\AssetManager;
+use Assetic\AssetWriter;
 use Assetic\Extension\Twig\AsseticExtension;
+use Assetic\Extension\Twig\TwigFormulaLoader;
+use Assetic\Extension\Twig\TwigResource;
 use Assetic\Factory\AssetFactory;
 use Assetic\Factory\LazyAssetManager;
 use Assetic\FilterManager;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
+use Symfony\Component\Finder\Finder;
 
 /**
  * Classe AsseticServiceProvider
@@ -82,12 +86,39 @@ class AsseticServiceProvider implements ServiceProviderInterface
 
         $app['assetic.lazy_asset_manager'] = $app->share(function () use ($app) {
             $am = new LazyAssetManager($app['assetic.factory']);
+
+            if (isset($app['twig'])) {
+                // carrega os assets pelo twig
+                $am->setLoader('twig', new TwigFormulaLoader($app['twig']));
+
+                $loader = $app['twig']->getLoader();
+                if ($loader instanceof \Twig_Loader_Chain) {
+                    $loader = new \Twig_Loader_Filesystem($app['twig.path']);
+                }
+                switch (true) {
+                    case ($loader instanceof \Twig_Loader_Filesystem):
+                        $namespaces = $loader->getNamespaces();
+
+                        foreach ($namespaces as $ns) {
+                            if ( count($loader->getPaths($ns)) > 0 ) {
+                                $iterator = Finder::create()->files()->in($loader->getPaths($ns));
+
+                                foreach ($iterator as $file) {
+                                    $resource = new TwigResource($loader, '@' . $ns . '/' . $file->getRelativePathname());
+                                    $am->addResource($resource, 'twig');
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        throw new \InvalidArgumentException(sprintf('Loader %s não suportado (LazyAssetManager)', get_class($loader)));
+                }
+            }
             return $am;
         });
 
         $app['assetic.asset_writer'] = $app->share(function () use ($app) {
-            $am = new \Assetic\AssetWriter($app['assetic.factory']);
-            return $am;
+            return new AssetWriter($app['assetic.dist_path']);
         });
 
         if (isset($app['twig'])) {
@@ -101,7 +132,9 @@ class AsseticServiceProvider implements ServiceProviderInterface
 
     public function boot(Application $app)
     {
-
+        $app->after(function () use ($app) {
+            $app['assetic.asset_writer']->writeManagerAssets($app['assetic.lazy_asset_manager']);
+        });
     }
 
 }
