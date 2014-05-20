@@ -2,6 +2,7 @@
 
 namespace Reacao\Controller;
 
+use Broda\File\Uploader;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMException;
@@ -9,7 +10,6 @@ use Imagine\Image\Box;
 use Imagine\Image\ImagineInterface;
 use Imagine\Image\Point;
 use Psr\Log\LoggerInterface;
-use Reacao\File\Uploader;
 use Reacao\Model\Serie\Capitulo\Pagina;
 use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\File;

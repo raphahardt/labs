@@ -1,6 +1,6 @@
 <?php
 
-namespace Reacao\Provider;
+namespace Broda\Provider;
 
 use Assetic\Asset\AssetCollection;
 use Assetic\Asset\AssetInterface;
@@ -27,7 +27,7 @@ class AsseticServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        $app['assetic.assets'] = $app['assetic.filters'] = array();
+        $app['assetic.assets'] = $app['assetic.filters'] = $app['assetic.workers'] = array();
 
         $app['assetic.asset_manager'] = $app->share(function () use ($app) {
             $am = new AssetManager();
@@ -80,6 +80,11 @@ class AsseticServiceProvider implements ServiceProviderInterface
             $factory->setFilterManager($app['assetic.filter_manager']);
             $factory->setDebug(isset($app['debug']) ? $app['debug'] : false);
             $factory->setDefaultOutput($app['assetic.dist_path']);
+            if (isset($app['assetic.workers']) && is_array($app['assetic.workers'])) {
+                foreach ($app['assetic.workers'] as $worker) {
+                    $factory->addWorker($worker);
+                }
+            }
 
             return $factory;
         });
@@ -91,27 +96,18 @@ class AsseticServiceProvider implements ServiceProviderInterface
                 // carrega os assets pelo twig
                 $am->setLoader('twig', new TwigFormulaLoader($app['twig']));
 
-                $loader = $app['twig']->getLoader();
-                if ($loader instanceof \Twig_Loader_Chain) {
-                    $loader = new \Twig_Loader_Filesystem($app['twig.path']);
-                }
-                switch (true) {
-                    case ($loader instanceof \Twig_Loader_Filesystem):
-                        $namespaces = $loader->getNamespaces();
+                $loader = $app['twig.loader.filesystem'];
+                $namespaces = $loader->getNamespaces();
 
-                        foreach ($namespaces as $ns) {
-                            if ( count($loader->getPaths($ns)) > 0 ) {
-                                $iterator = Finder::create()->files()->in($loader->getPaths($ns));
+                foreach ($namespaces as $ns) {
+                    if ( count($loader->getPaths($ns)) > 0 ) {
+                        $iterator = Finder::create()->files()->in($loader->getPaths($ns));
 
-                                foreach ($iterator as $file) {
-                                    $resource = new TwigResource($loader, '@' . $ns . '/' . $file->getRelativePathname());
-                                    $am->addResource($resource, 'twig');
-                                }
-                            }
+                        foreach ($iterator as $file) {
+                            $resource = new TwigResource($loader, '@' . $ns . '/' . $file->getRelativePathname());
+                            $am->addResource($resource, 'twig');
                         }
-                        break;
-                    default:
-                        throw new \InvalidArgumentException(sprintf('Loader %s não suportado (LazyAssetManager)', get_class($loader)));
+                    }
                 }
             }
             return $am;
@@ -132,9 +128,7 @@ class AsseticServiceProvider implements ServiceProviderInterface
 
     public function boot(Application $app)
     {
-        $app->after(function () use ($app) {
-            $app['assetic.asset_writer']->writeManagerAssets($app['assetic.lazy_asset_manager']);
-        });
+        
     }
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Reacao\Util;
+namespace Broda\Util;
 
 /**
  * Classe FileUtils

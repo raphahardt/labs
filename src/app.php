@@ -1,11 +1,14 @@
 <?php
 
+use Broda\Application;
+use Broda\File\Unpacker;
+use Broda\File\Uploader;
+use Broda\Provider\AsseticServiceProvider;
+use Broda\Provider\ImagineServiceProvider;
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ArrayCache;
-use Reacao\Provider\ImagineServiceProvider;
-use Silex\Application;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\SecurityServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
@@ -35,14 +38,14 @@ $app->register(new DoctrineOrmServiceProvider());
 
 $app->register(new SecurityServiceProvider());
 
-$app->register(new Reacao\Provider\AsseticServiceProvider());
+$app->register(new AsseticServiceProvider());
 
 $app['file.uploader'] = $app->share(function () use ($app) {
-    return new \Reacao\File\Uploader($app['request'], $app['file.upload.base_path']);
+    return new Uploader($app['request'], $app['file.upload.base_path']);
 });
 
 $app['file.unpacker'] = $app->share(function () use ($app) {
-    return new \Reacao\File\Unpacker($app['file.upload.base_path'].'/unpacked_tmp');
+    return new Unpacker($app['file.upload.base_path'].'/unpacked_tmp');
 });
 
 /*$app['twig'] = $app->share($app->extend('twig', function ($twig) use ($app) {

@@ -11,13 +11,13 @@
         "kriswallsmith/assetic": "~1",
         "leafo/lessphp": "*",
         "mrclay/minify": "*",
-        
+
         "imagine/imagine": "*",
         "doctrine/orm": "~2",
         "monolog/monolog": ">=1.0.0",
         "dflydev/doctrine-orm-service-provider": "~1.0"
     },
     "autoload": {
-        "psr-0": { "Reacao\\": "src/" }
+        "psr-0": { "Reacao\\": "src/", "Broda\\": "src/" }
     }
 }

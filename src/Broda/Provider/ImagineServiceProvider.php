@@ -6,7 +6,7 @@
  * and open the template in the editor.
  */
 
-namespace Reacao\Provider;
+namespace Broda\Provider;
 
 use Silex\Application;
 use Silex\ServiceProviderInterface;

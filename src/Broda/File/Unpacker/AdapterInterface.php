@@ -1,6 +1,6 @@
 <?php
 
-namespace Reacao\File\Unpacker;
+namespace Broda\File\Unpacker;
 
 use Symfony\Component\HttpFoundation\File\File;
 

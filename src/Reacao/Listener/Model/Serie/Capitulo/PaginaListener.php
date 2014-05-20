@@ -11,7 +11,7 @@ namespace Reacao\Listener\Model\Serie\Capitulo;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Mapping as ORM;
 use Reacao\Model\Serie\Capitulo\Pagina;
-use Reacao\Util\FileUtils;
+use Broda\Util\FileUtils;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 /**

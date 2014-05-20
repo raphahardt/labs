@@ -1,10 +1,8 @@
 {# empty Twig template #}
 
-{% javascripts '@jquery' output="js/teste.js" debug=false %}
+{#% javascripts '@jquery' output="jquery.js" debug=false filter='jsmin' %}
     <script src="{{ asset_url }}"></script>
-{% endjavascripts %}
-
-{{ app.request.basepath }}
+{% endjavascripts %#}
 
 <form action="{{ path('auth') }}" method="post">
     {{ error }}

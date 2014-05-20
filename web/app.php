@@ -135,9 +135,7 @@ $app['reacao.controller.publish'] = function () use ($app) {
 };
 
 $app->get('/', function () use ($app) {
-    $content = '';
-    $content .= file_get_contents($app['twig.path'][0].'/upload.html');
-    return $content;
+    return $app['twig']->render('upload.twig');
 });
 
 $app->get('/upload', 'reacao.controller.publish:get');

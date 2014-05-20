@@ -6,7 +6,7 @@
  * and open the template in the editor.
  */
 
-namespace Reacao\File\Unpacker;
+namespace Broda\File\Unpacker;
 
 /**
  * Classe RarAdapter

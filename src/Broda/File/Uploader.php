@@ -1,6 +1,6 @@
 <?php
 
-namespace Reacao\File;
+namespace Broda\File;
 
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
