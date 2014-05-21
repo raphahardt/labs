@@ -10,6 +10,7 @@ return array(
     'jquery' => new FileAsset($bower_path.'/jquery/dist/jquery.js'),
     'jquery_ui' => new FileAsset($bower_path.'/jquery-ui/ui/jquery-ui.js'),
     'angularjs' => array(
+        'jquery',
         new FileAsset($bower_path.'/angular/angular.js'),
         new FileAsset($bower_path.'/angular-animate/angular-animate.js'),
     ),
@@ -42,6 +43,6 @@ return array(
     ),
     'blueimp_fileupload_css' => array(
         new FileAsset($bower_path.'/blueimp-file-upload/css/jquery.fileupload.css'),
-        new FileAsset($bower_path.'/blueimp-file-upload/css/jquery.fileupload-noscript.css'),
+        //new FileAsset($bower_path.'/blueimp-file-upload/css/jquery.fileupload-noscript.css'),
     ),
 );

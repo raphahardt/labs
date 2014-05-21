@@ -20,9 +20,10 @@ $app['db.options'] = array(
 $app['assetic.source_path'] = __DIR__.'/public';
 $app['assetic.dist_path'] = __DIR__.'/../web/assets';
 $app['assetic.assets'] = require __DIR__.'/assets.php';
-/*$app['assetic.filters'] = array(
-    'jsmin' => new \Assetic\Filter\JSMinPlusFilter()
-);*/
+$app['assetic.filters'] = array(
+    'jsmin' => new \Assetic\Filter\JSMinPlusFilter(),
+    'cssrewrite' => new Assetic\Filter\CssRewriteFilter(),
+);
 
 // ORM
 $app['orm.proxies_dir'] = __DIR__ . "/../var/orm/proxies";

@@ -6,7 +6,7 @@ use Assetic\Asset\AssetCollection;
 use Assetic\Asset\AssetInterface;
 use Assetic\Asset\AssetReference;
 use Assetic\AssetManager;
-use Assetic\AssetWriter;
+use Broda\Provider\Assetic\AssetWriter;
 use Assetic\Extension\Twig\AsseticExtension;
 use Assetic\Extension\Twig\TwigFormulaLoader;
 use Assetic\Extension\Twig\TwigResource;
@@ -128,7 +128,7 @@ class AsseticServiceProvider implements ServiceProviderInterface
 
     public function boot(Application $app)
     {
-        
+
     }
 
 }

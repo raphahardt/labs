@@ -8,7 +8,7 @@
         {% stylesheets
             '@bootstrap_css'
             '@blueimp_fileupload_css'
-            output="css/*.css" combine=false
+            output="css/*.css" filter="cssrewrite" combine=false
         %}
             <link rel="stylesheet" href="{{ app.request.basepath ~ '/assets/' ~ asset_url }}"/>
         {% endstylesheets %}
@@ -146,13 +146,13 @@
 
         {{ source('upload.html') }}
 
-        {#% javascripts output="js/*.js" debug=false combine=true
-            '@bootstrap'
+        {% javascripts output="js/*.js" name="core" filter='?jsmin' combine=false
             '@blueimp_fileupload'
             '@angular_sortable'
+            '@bootstrap'
         %}
-            <link rel="stylesheet" href="{{ asset_url }}"/>
-        {% endjavascripts %#}
+            <script src="{{ app.request.basepath ~ '/assets/' ~ asset_url }}"></script>
+        {% endjavascripts %}
         <script>
             $(function () {
                 $(document).bind('drop dragover', function (e) {
