@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    </head>
+    <body>
+
+        <div ng-app="teste" ng-controller="TesteCtrl" style="padding: 50px;">
+
+            <button class="btn btn-default" data-tooltip="conteudo" data-placement="right">teste</button>
+
+            <input type="text" ng-model="conteudo.title"/>
+
+            <input type="text" data-typeahead="options" ng-model="teste" />
+            <pre>{{ teste |json }}</pre>
+
+        </div>
+
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+        <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.min.js"></script>
+        <script>
+
+            angular.module('teste', [])
+
+
+                    .factory('Bloodhound', [
+                        '$window',
+                        function ($window) {
+                            return $window.Bloodhound;
+                        }
+                    ])
+                    .directive('typeahead', [
+                        '$compile', '$rootScope',
+                        function ($compile, $rootScope) {
+                            return {
+                                restrict: 'A',
+                                require: 'ngModel',
+                                scope: {
+                                    options: '=typeahead'
+                                },
+                                controller: [
+                                    '$scope', '$element', '$attrs', 'Bloodhound',
+                                    function ($scope, $element, $attrs, Bloodhound) {
+                                        var settings = $scope.options;
+
+                                        function createEngine(source) {
+                                            var defaults = {
+                                                dupDetector: function (remoteMatch, localMatch) {
+                                                    console.info('TYPEAHEAD:COMPARISON_DUPLICATE', remoteMatch, localMatch);
+                                                    return angular.equals(remoteMatch, localMatch);
+                                                },
+                                                prefetch: {
+                                                    ttl: 0,
+                                                    ajax: {
+                                                        beforeSend: function (xhr) {
+                                                            console.info('TYPEAHEAD:AJAX:BEFORE (prefetch)');
+                                                            $scope.$emit('typeahead:ajax:before', xhr);
+                                                        },
+                                                        success: function (data, textStatus, xhr) {
+                                                            console.info('TYPEAHEAD:AJAX:SUCCESS (prefetch)');
+                                                            $scope.$emit('typeahead:ajax:success', data, textStatus, xhr);
+                                                        },
+                                                        error: function (xhr, textStatus, errorThrown) {
+                                                            console.info('TYPEAHEAD:AJAX:ERROR (prefetch)');
+                                                            $scope.$emit('typeahead:ajax:error', xhr, textStatus, errorThrown);
+                                                        },
+                                                        complete: function (xhr, textStatus) {
+                                                            console.info('TYPEAHEAD:AJAX:COMPLETE (prefetch)');
+                                                            $scope.$emit('typeahead:ajax:complete', xhr, textStatus);
+                                                        }
+                                                    }
+                                                },
+                                                remote: {
+                                                    ttl: 0,
+                                                    ajax: {
+                                                        beforeSend: function (xhr) {
+                                                            console.info('TYPEAHEAD:AJAX:BEFORE (remote)');
+                                                            $scope.$emit('typeahead:ajax:before', xhr);
+                                                        },
+                                                        success: function (data, textStatus, xhr) {
+                                                            console.info('TYPEAHEAD:AJAX:SUCCESS (remote)');
+                                                            $scope.$emit('typeahead:ajax:success', data, textStatus, xhr);
+                                                        },
+                                                        error: function (xhr, textStatus, errorThrown) {
+                                                            console.info('TYPEAHEAD:AJAX:ERROR (remote)');
+                                                            $scope.$emit('typeahead:ajax:error', xhr, textStatus, errorThrown);
+                                                        },
+                                                        complete: function (xhr, textStatus) {
+                                                            console.info('TYPEAHEAD:AJAX:COMPLETE (remote)');
+                                                            $scope.$emit('typeahead:ajax:complete', xhr, textStatus);
+                                                        }
+                                                    }
+                                                }
+                                            };
+                                            // fix prefetch e remote
+                                            if ('string' === typeof source.prefetch) {
+                                                source.prefetch = { url: source.prefetch };
+                                            }
+                                            if ('string' === typeof source.remote) {
+                                                source.remote = { url: source.remote };
+                                            }
+
+                                            var opts = $.extend(true, {}, defaults, source);
+                                            return new Bloodhound(opts);
+                                        };
+
+                                        // fix templates
+                                        if (angular.isDefined(settings.datasets.templates)) {
+                                            for (var template in settings.datasets.templates) {
+                                                if (settings.datasets.templates.hasOwnProperty(template) &&
+                                                        'string' === typeof settings.datasets.templates[template]) {
+                                                    settings.datasets.templates[template] = (function (html) {
+                                                        return function (scope) {
+                                                            var newScope = $rootScope.$new(true);
+                                                            angular.copy(scope, newScope);
+                                                            return $compile(html)(newScope);
+                                                        };
+                                                        /*return function (scope) {
+                                                            console.log('AAA',html);
+                                                            for (var key in scope) {
+                                                                if (scope.hasOwnProperty(key)) {
+                                                                    html = html.replace(new RegExp('{{\\s*'+key+'\s*}}', 'gi'), scope[key]);
+                                                                }
+                                                            }
+                                                            return html;
+                                                        };*/
+                                                    })(settings.datasets.templates[template]);
+                                                }
+                                            }
+                                        }
+
+                                        // cria a engine de sugestões
+                                        var engine = $scope.$engine = createEngine(settings.datasets.source);
+                                        settings.datasets.source = engine.ttAdapter();
+                                        console.log('opcoes do bloodhound',settings);
+
+                                        // inicia a engine de sugestões
+                                        var promise = engine.initialize();
+
+                                        // mapeia events de ajax do bloodhound para outros controllers
+                                        promise
+                                        .done(function (xhr) {
+                                            console.info('TYPEAHEAD:AJAX:DONE');
+                                            $scope.$emit('typeahead:ajax:done', xhr);
+                                        })
+                                        .fail(function (xhr) {
+                                            console.info('TYPEAHEAD:AJAX:FAIL');
+                                            $scope.$emit('typeahead:ajax:fail', xhr);
+                                        })
+                                        .always(function (xhr) {
+                                            console.info('TYPEAHEAD:AJAX:ALWAYS');
+                                            $scope.$emit('typeahead:ajax:always', xhr);
+                                            //$scope.$apply();
+                                        });
+
+                                        /**
+                                         * Adiciona um valor ao banco de sugestões
+                                         *
+                                         * @param {Object} value
+                                         * @returns {void}
+                                         */
+                                        $scope.addValue = function (value) {
+                                            if (!angular.isObject(value)) {
+                                                throw new Error('O valor deve ser sempre um objeto');
+                                            }
+                                            engine.add([value]);
+                                        };
+
+                                        /**
+                                         * Apaga o cache de sugestões da requisição
+                                         * prefetch
+                                         *
+                                         * @returns {void}
+                                         */
+                                        $scope.clearPrefetchCache = function () {
+                                            engine.clearPrefetchCache();
+                                        };
+
+                                        /**
+                                         * Apaga o cache de sugestões da requisição
+                                         * remote
+                                         *
+                                         * @returns {void}
+                                         */
+                                        $scope.clearRemoteCache = function () {
+                                            engine.clearRemoteCache();
+                                        };
+
+                                        /*$scope.exampleData = {
+                                            displayKey: 'num',
+                                            source: engine.ttAdapter()
+                                        };*/
+
+                                        $element.typeahead(settings.options, settings.datasets);
+                                    }
+                                ],
+                                link: function postLink($scope, $element, $attrs, ngModel) {
+                                    //$element.typeahead({}, [$scope.exampleData]);
+
+                                    // Update the value binding when a value is manually selected from the dropdown.
+                                    $element.bind('typeahead:selected', function(object, suggestion, dataset) {
+                                        var value = suggestion;
+                                        $scope.$apply(function () {
+                                            ngModel.$setViewValue(value);
+                                        });
+                                        console.info('TYPEAHEAD:SELECTED', value);
+                                        //$scope.$emit('typeahead:selected', suggestion, dataset);
+                                    });
+
+                                    // Update the value binding when a query is autocompleted.
+                                    $element.bind('typeahead:autocompleted', function(object, suggestion, dataset) {
+                                        var value = suggestion;
+                                        $scope.$apply(function () {
+                                            ngModel.$setViewValue(value);
+                                        });
+                                        console.info('TYPEAHEAD:AUTOCOMPLETED', value);
+                                      //updateScope(object, suggestion, dataset);
+                                      //$scope.$emit('typeahead:autocompleted', suggestion, dataset);
+                                    });
+
+                                    $element.bind('input', function () {
+                                        //var preservePos = getCursorPosition(element);
+                                        var value = $element.typeahead('val');
+                                        $scope.$apply(function () {
+                                            ngModel.$setViewValue(value);
+                                        });
+                                        console.info('TYPEAHEAD:INPUT', value);
+                                        //setCursorPosition(element, preservePos);
+                                    });
+                                    //console.log($scope);
+                                }
+                            };
+                        }
+                    ])
+
+
+
+
+
+                    .directive('tooltip', [
+                        function () {
+                            return {
+                                restrict: 'A',
+                                scope: {
+                                    tooltip: '='
+                                },
+                                link: function postLink($scope, $element, $attrs) {
+                                    $element.tooltip({
+                                        title: function () {
+                                            return $scope.tooltip.title || '';
+                                        }
+                                    });
+                                }
+                            };
+                        }
+                    ])
+                    .controller('TesteCtrl', [
+                        '$scope',
+                        function ($scope) {
+                            $scope.conteudo = {};
+                            $scope.conteudo.title = 'aaa';
+
+                            $scope.teste = '';
+
+                            $scope.options = {
+                                options: {
+                                    highlight: false,
+                                    hint: true,
+                                    minLength: 1
+                                },
+                                datasets: //[
+                                    {
+                                        name: 'numeros',
+                                        displayKey: 'num',
+                                        templates: {
+                                            empty: '<div>Nenhum registro encontrado para {{query}}</div>',
+                                            footer: '<div>Pesquisa para {{query}}<span ng-show="isEmpty"> - mais resultados</span></div>',
+                                            header: '<h3>Numeros (com {{query}})</h3>',
+                                            suggestion: '<p>Número {{num}}</p>'
+                                        },
+                                        source: {
+                                            datumTokenizer: function (datum) {
+                                                return datum.num.split(/\s+/);
+                                            },
+                                            queryTokenizer: function (query) {
+                                                return query.split(/\s+/);
+                                            },
+                                            limit: 10,
+                                            //dupDetector: function (r, l) {},
+                                            //sorter: function (v1,v2) {},
+                                            local: [
+                                                {num: 'one'},
+                                                {num: 'two'},
+                                                {num: 'three'},
+                                                {num: 'four'}
+                                            ],
+                                            prefetch: 'prefetch',
+                                            remote: 'remote/%QUERY'
+                                        }
+                                    }
+                                //]
+                            };
+                        }
+                    ]);
+
+        </script>
+    </body>
+</html>

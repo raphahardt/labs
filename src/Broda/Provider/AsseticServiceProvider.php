@@ -119,7 +119,17 @@ class AsseticServiceProvider implements ServiceProviderInterface
 
         if (isset($app['twig'])) {
             $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
-                $twig->addExtension(new AsseticExtension($app['assetic.factory']));
+                $functions = array(
+                    'cssrewrite' => array(
+                        'options' => array(
+                            //'root' => $app['assetic.dist_path'],
+                            //'name' => 'core',
+                            //'debug' => isset($app['debug']) ? $app['debug'] : false,
+                            'combine' => true,
+                        )
+                    )
+                );
+                $twig->addExtension(new AsseticExtension($app['assetic.factory'], $functions));
 
                 return $twig;
             }));
@@ -128,7 +138,11 @@ class AsseticServiceProvider implements ServiceProviderInterface
 
     public function boot(Application $app)
     {
-
+        if (isset($app['debug']) && $app['debug']) {
+            $app->after(function () use ($app) {
+                $app['assetic.asset_writer']->writeManagerAssets($app['assetic.lazy_asset_manager']);
+            });
+        }
     }
 
 }

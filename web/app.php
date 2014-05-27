@@ -134,8 +134,31 @@ $app['reacao.controller.publish'] = function () use ($app) {
     return new PublishController($app['db'], $app['request'], $app['path.public'], $app['imagine'], $app['orm.em']);
 };
 
-$app->get('/', function () use ($app) {
+/*$app->get('/', function () use ($app) {
     return $app['twig']->render('upload.twig');
+});*/
+
+$app->get('/', function () use ($app) {
+    return $app['twig']->render('bootstrap.twig');
+});
+
+$app->get('/prefetch', function () use ($app) {
+    return new \Symfony\Component\HttpFoundation\JsonResponse(array(
+        array('num' => 'two'),
+        array('num' => 'twenty'),
+        array('num' => 'thirthen'),
+        array('num' => 'fourteen'),
+        array('num' => 'fiveteen'),
+    ));
+});
+
+$app->get('/remote/{query}', function ($query = null) use ($app) {
+    return new \Symfony\Component\HttpFoundation\JsonResponse(array(
+        array('num' => 'one'),
+        array('num' => 'thousand'),
+        array('num' => 'hundred'),
+        array('num' => 'a thousand'),
+    ));
 });
 
 $app->get('/upload', 'reacao.controller.publish:get');

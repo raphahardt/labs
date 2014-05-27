@@ -14,11 +14,6 @@ $app['orm.default_cache'] = 'array';
 // ajuda a mostrar qual é o problema com o usuário
 $app['security.hide_user_not_found'] = false;
 
-// escreve os assets
-$app->after(function () use ($app) {
-    $app['assetic.asset_writer']->writeManagerAssets($app['assetic.lazy_asset_manager']);
-});
-
 $app->register(new MonologServiceProvider(), array(
     'monolog.logfile' => __DIR__.'/../var/logs/app_dev.log',
 ));

@@ -5,13 +5,13 @@
         <title>teste</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!-- Bootstrap styles -->
-        {% stylesheets
+        {#% stylesheets
             '@bootstrap_css'
             '@blueimp_fileupload_css'
             output="css/*.css" filter="cssrewrite" combine=false
         %}
             <link rel="stylesheet" href="{{ app.request.basepath ~ '/assets/' ~ asset_url }}"/>
-        {% endstylesheets %}
+        {% endstylesheets %#}
         <style>
             /* Make clicks pass-through */
             .spinner, .bar {
@@ -146,13 +146,13 @@
 
         {{ source('upload.html') }}
 
-        {% javascripts output="js/*.js" name="core" filter='?jsmin' combine=false
+        {#% javascripts output="js/*.js" name="core" filter='?jsmin' combine=false
             '@blueimp_fileupload'
             '@angular_sortable'
             '@bootstrap'
         %}
             <script src="{{ app.request.basepath ~ '/assets/' ~ asset_url }}"></script>
-        {% endjavascripts %}
+        {% endjavascripts %#}
         <script>
             $(function () {
                 $(document).bind('drop dragover', function (e) {
