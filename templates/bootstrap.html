@@ -5,6 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="http://twitter.github.io/typeahead.js/css/examples.css">
     </head>
     <body>
 
@@ -14,52 +15,544 @@
 
             <input type="text" ng-model="conteudo.title"/>
 
-            <input type="text" data-typeahead="options" ng-model="teste" />
-            <pre>{{ teste |json }}</pre>
+            <input type="text" data-typeahead="options" data-model="teste" />
+            <pre>{{ teste |json }}
+
+            {{ status }}</pre>
 
         </div>
 
         <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
         <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.js"></script>
         <script>
 
-            angular.module('teste', [])
+            function $typeaheadObject () {}
 
+            angular.module('idle', [], [
+                '$provide',
+                function ($provide) {
+                    $provide.provider('$idle',
+                    function () {
 
-                    .factory('Bloodhound', [
-                        '$window',
-                        function ($window) {
-                            return $window.Bloodhound;
+                        function Idler($doc, $timeout) {
+                            // private ----
+                            var that = this,
+                                away = false,
+                                awayTimer = null,
+                                awayTimestamp,
+                                idle = false,
+                                idleTimer = null,
+                                idleTimestamp,
+
+                                callbacks = {
+                                    active: [],
+                                    away: [],
+                                    idle: []
+                                };
+
+                            /**
+                             * Define o timeout do idle
+                             *
+                             * @private
+                             * @returns {void}
+                             */
+                            function setIdleTimeout() {
+                                var ms = that.defaults.idleTimeout;
+                                idleTimestamp = new Date().getTime() + ms;
+                                if (idleTimer != null) {
+                                    try {
+                                        idleTimer.cancel();
+                                    } catch(e){}
+                                }
+                                idleTimer = $timeout(that.makeIdle, ms + 50);
+                                console.log('idle in ' + ms + ', tid = ' + idleTimer);
+                            }
+
+                            /**
+                             * Define o timeout do away
+                             *
+                             * @private
+                             * @returns {void}
+                             */
+                            function setAwayTimeout() {
+                                var ms = that.defaults.awayTimeout;
+                                awayTimestamp = new Date().getTime() + ms;
+                                if (awayTimer != null) {
+                                    try {
+                                        awayTimer.cancel();
+                                    } catch(e){}
+                                }
+                                awayTimer = $timeout(that.makeAway, ms + 50);
+                                console.log('away in ' + ms + ', tid = ' + awayTimer);
+                            }
+
+                            /**
+                             * Constructor
+                             *
+                             * @returns {void}
+                             */
+                            function init () {
+                                var d = $doc[0];
+                                // detecta variaveis para a visibilidade de troca de abas
+                                var hidden, state, visibilityChange;
+                                if (typeof d.hidden !== "undefined") {
+                                    hidden = "hidden";
+                                    visibilityChange = "visibilitychange";
+                                    state = "visibilityState";
+                                } else if (typeof d.mozHidden !== "undefined") {
+                                    hidden = "mozHidden";
+                                    visibilityChange = "mozvisibilitychange";
+                                    state = "mozVisibilityState";
+                                } else if (typeof d.msHidden !== "undefined") {
+                                    hidden = "msHidden";
+                                    visibilityChange = "msvisibilitychange";
+                                    state = "msVisibilityState";
+                                } else if (typeof d.webkitHidden !== "undefined") {
+                                    hidden = "webkitHidden";
+                                    visibilityChange = "webkitvisibilitychange";
+                                    state = "webkitVisibilityState";
+                                }
+
+                                d.addEventListener(visibilityChange, function() {
+                                    if (d[state] === hidden) {
+                                        // away
+                                        //console.log('away from tab change');
+                                        idleTimestamp = awayTimestamp = (new Date).getTime();
+                                        that.makeAway();
+                                        that.makeIdle();
+                                    } else {
+                                        // online
+                                        //console.log('active from tab change');
+                                        that.makeActive();
+                                    }
+                                }, false);
+
+                                $doc.on([
+                                'mousemove',
+                                'mouseenter',
+                                'scroll',
+                                'keydown',
+                                'click',
+                                'dblclick'
+                                ].join(' '), function () {
+                                    that.makeActive();
+                                });
+
+                                setIdleTimeout(that.defaults.idleTimeout);
+                                setAwayTimeout(that.defaults.awayTimeout);
+
+                            }
+
+                            // protected -----
+                            this.defaults = {
+                                awayTimeout: 7000,
+                                idleTimeout: 16000
+                            };
+
+                            /**
+                             * Retorna se está idle ou não
+                             *
+                             * @returns {Boolean}
+                             */
+                            this.isIdle = function () {
+                                return idle;
+                            };
+
+                            /**
+                             * Retorna se está away ou não
+                             *
+                             * @returns {Boolean}
+                             */
+                            this.isAway = function () {
+                                return away;
+                            };
+
+                            /**
+                             * Retorna se está online ou não
+                             *
+                             * @returns {Boolean}
+                             */
+                            this.isActive = function () {
+                                return !idle && !away;
+                            };
+
+                            /**
+                             * Adiciona um callback a cadeia de callbacks a serem
+                             * chamados quando o status é mudado.
+                             *
+                             * Possíveis valores para o evento: 'idle', 'away', 'active'
+                             *
+                             * @param {String} eventName
+                             * @param {Function} callback
+                             * @returns {void}
+                             */
+                            this.addCallback = function (eventName, callback) {
+                                switch (true) {
+                                    case (eventName === 'idle'):
+                                    case (eventName === 'away'):
+                                    case (eventName === 'active'):
+                                        callbacks[eventName].push(callback);
+                                        break;
+                                    default:
+                                        throw new Error('Evento '+eventName+' não suportado pelo $idle');
+                                }
+                            };
+
+                            this.makeIdle = function () {
+                                var t = new Date().getTime();
+                                if (t < idleTimestamp) {
+                                    console.log('Not idle yet. Idle in ' + (idleTimestamp - t + 50));
+                                    idleTimer = $timeout(that.makeIdle, idleTimestamp - t + 50);
+                                    return;
+                                }
+
+                                try {
+                                    if (!idle) {
+                                        for (var i = 0; i < callbacks.idle.length; i++) {
+                                            callbacks.idle[i]();
+                                        }
+                                    }
+                                } catch (err) {
+                                }
+
+                                console.log('** IDLE **');
+                                idle = true;
+                            };
+
+                            this.makeAway = function () {
+                                var t = new Date().getTime();
+                                if (t < awayTimestamp) {
+                                    console.log('Not away yet. Away in ' + (awayTimestamp - t + 50));
+                                    awayTimer = $timeout(that.makeAway, awayTimestamp - t + 50);
+                                    return;
+                                }
+
+                                try {
+                                    if (!away) {
+                                        for (var i = 0; i < callbacks.away.length; i++) {
+                                            callbacks.away[i]();
+                                        }
+                                    }
+                                } catch (err) {
+                                }
+
+                                console.log('** AWAY **');
+                                away = true;
+                            };
+
+                            this.makeActive = function () {
+                                var t = new Date().getTime();
+                                idleTimestamp = t + that.defaults.idleTimeout;
+                                awayTimestamp = t + that.defaults.awayTimeout;
+                                //console.log('not idle.');
+
+                                if (idle) {
+                                    setIdleTimeout();
+                                }
+
+                                if (away) {
+                                    setAwayTimeout();
+                                }
+
+                                try {
+                                    if (idle || away) {
+                                        console.log('** BACK **');
+                                        $timeout(function () {
+                                            for (var i = 0; i < callbacks.active.length; i++) {
+                                                callbacks.active[i]();
+                                            }
+                                        }, 0);
+                                    }
+                                } catch (err) {
+                                }
+
+                                idle = false;
+                                away = false;
+                            };
+
+                            // inicializa o idler
+                            init();
+
+                        }
+
+                        Idler.prototype.constructor = Idler;
+                        Idler.prototype.on = function (eventName, callback) {
+                            this.addCallback(eventName, callback);
+                            return this;
+                        };
+
+                        this.$get = [
+                            '$document', '$timeout',
+                            function ($document, $timeout) {
+                                return new Idler($document, $timeout);
+                            }
+                        ];
+                    });
+                }
+            ]);
+
+            angular.module('teste', ['idle'], [
+                        '$provide',
+                        function ($provide) {
+
+                            /**
+                             * Provider do typeahead
+                             *
+                             * Para configurar, altere as propriedades em $typeaheadProvider.defaults
+                             */
+                            $provide.provider('$typeahead',
+                            function () {
+                                var $th = this;
+                                /**
+                                 * Propriedades padrão do typeahead
+                                 * @var {Object}
+                                 */
+                                this.defaults = {
+                                    options: {
+                                        highlight: false,
+                                        hint: true,
+                                        minLength: 1
+                                    },
+                                    datasets: {}
+                                };
+
+                                /**
+                                 * Propriedades padrão do typeahead para os datasets
+                                 * @var {Object}
+                                 */
+                                this.datasetDefaults = {
+                                    dupDetector: function (remoteMatch, localMatch) {
+                                        return angular.equals(remoteMatch, localMatch);
+                                    }
+                                };
+
+                                this.$get = [
+                                    '$window', '$compile', '$rootScope',
+                                    function ($window, $compile, $rootScope) {
+                                        /**
+                                         * Compilador para templates do bloodhound
+                                         *
+                                         * @returns {Compiler}
+                                         */
+                                        function Compiler() {
+                                            this.html = '';
+                                            this.link = function (){};
+                                        };
+
+                                        /**
+                                         * Cria uma função de link para compilar os templates
+                                         *
+                                         * Irá retornar uma função com a assinatura function (context) {}
+                                         * que irá inserir os valores interpolados corretos no template
+                                         * pré-compilado
+                                         *
+                                         * @param {String} html HTML do template a ser pré-compilado
+                                         * @returns {Function}
+                                         */
+                                        Compiler.prototype.create = function (html) {
+                                            var that = this;
+                                            this.html = html;
+                                            this.link = $compile(this.html);
+                                            return function (context) {
+                                                var scope = $rootScope.$new(true), // scope temporario para o $compile
+                                                    compiled,
+                                                    wrap;
+                                                for (var key in context) {
+                                                    if (context.hasOwnProperty(key)) {
+                                                        scope[key] = context[key];
+                                                    }
+                                                }
+                                                compiled = that.link(scope);
+                                                scope.$digest();
+                                                scope.$destroy(); // não preciso mais do scope
+
+                                                wrap = $window.document.createElement('div');
+                                                wrap.appendChild(compiled.clone()[0]);
+                                                return wrap.innerHTML;
+                                            };
+                                        };
+
+                                        /**
+                                         * Engine de sugestões do typeahead
+                                         *
+                                         * @returns {Bloodhound}
+                                         */
+                                        function Bloodhound() {
+                                            this.bh = $window.Bloodhound;
+                                        }
+
+                                        /**
+                                         * Cria a engine de sugestões do typeahead
+                                         *
+                                         * @param {Object} source
+                                         * @returns {window.Bloodhound}
+                                         */
+                                        Bloodhound.prototype.create = function(source) {
+                                            var engine,
+                                                options = {};
+
+                                            // fix prefetch e remote
+                                            if ('string' === typeof source.prefetch) {
+                                                source.prefetch = { url: source.prefetch };
+                                            }
+                                            if ('string' === typeof source.remote) {
+                                                source.remote = { url: source.remote };
+                                            }
+
+                                            options = $.extend(true, $th.datasetDefaults, source);
+                                            var engine = new this.bh(options);
+
+                                            source = engine.ttAdapter();
+                                            return engine;
+                                        };
+
+                                        return {
+                                            compiler: new Compiler(),
+                                            engine: new Bloodhound()
+                                        };
+                                    }
+                                ];
+                            });
                         }
                     ])
+
+
+
                     .directive('typeahead', [
-                        '$compile', '$rootScope',
-                        function ($compile, $rootScope) {
+                        '$typeahead',
+                        /**
+                         *
+                         * @param {Object} $typeahead
+                         */
+                        function ($typeahead) {
                             return {
                                 restrict: 'A',
-                                require: 'ngModel',
+                                //require: 'ngModel',
                                 scope: {
-                                    options: '=typeahead'
+                                    options: '=typeahead',
+                                    model: '=model'
                                 },
                                 controller: [
-                                    '$scope', '$element', '$attrs', 'Bloodhound',
-                                    function ($scope, $element, $attrs, Bloodhound) {
+                                    '$scope', '$element', '$attrs',
+                                    function ($scope, $element, $attrs) {
                                         var settings = $scope.options;
+                                        var tyhead = this;
 
-                                        function createEngine(source) {
+                                        // fix templates
+                                        if (angular.isDefined(settings.datasets.templates)) {
+                                            angular.forEach(settings.datasets.templates, function (value, key) {
+                                                if ('string' === typeof value) {
+                                                    settings.datasets.templates[key] = $typeahead.compiler.create(value);
+                                                }
+                                            });
+                                        }
+
+                                        // cria a engine de sugestões
+                                        tyhead.engine = $typeahead.engine.create(settings.datasets.source);
+                                        settings.datasets.source = tyhead.engine.ttAdapter();
+                                        tyhead.engine = tyhead.engine.initialize();
+                                        
+                                        // mapeia events de ajax do bloodhound para outros controllers
+                                        tyhead.engine
+                                        .done(function (data, textStatus, xhr) {
+                                            console.info('TYPEAHEAD:AJAX:DONE');
+                                            $scope.$emit('typeahead:ajax:done', xhr, data);
+                                        })
+                                        .fail(function (xhr, textStatus, errorThrown) {
+                                            console.info('TYPEAHEAD:AJAX:FAIL');
+                                            $scope.$emit('typeahead:ajax:fail', xhr, errorThrown);
+                                        })
+                                        .always(function (a, textStatus) {
+                                            console.info('TYPEAHEAD:AJAX:ALWAYS');
+                                            if (textStatus !== 'success') {
+                                                // on error, arguments changes places
+                                                $scope.$emit('typeahead:ajax:always', arguments[0], textStatus, arguments[2]);
+                                            } else {
+                                                $scope.$emit('typeahead:ajax:always', arguments[2], textStatus, arguments[0]);
+                                            }
+                                            //$scope.$apply();
+                                        });
+
+                                        /**
+                                         * Adiciona um valor ao banco de sugestões
+                                         *
+                                         * @param {Object} value
+                                         * @returns {void}
+                                         */
+                                        tyhead.$addValue = function (value) {
+                                            if (!angular.isObject(value)) {
+                                                throw new Error('O valor deve ser sempre um objeto');
+                                            }
+                                            tyhead.$engine.add([value]);
+                                        };
+
+                                        /**
+                                         * Apaga o cache de sugestões da requisição
+                                         * prefetch
+                                         *
+                                         * @returns {void}
+                                         */
+                                        tyhead.$clearPrefetchCache = function () {
+                                            tyhead.$engine.clearPrefetchCache();
+                                        };
+
+                                        /**
+                                         * Apaga o cache de sugestões da requisição
+                                         * remote
+                                         *
+                                         * @returns {void}
+                                         */
+                                        tyhead.$clearRemoteCache = function () {
+                                            tyhead.$engine.clearRemoteCache();
+                                        };
+
+                                        tyhead.$abort = function () {
+                                            tyhead.engine.abort();
+                                        };
+
+                                        /*$scope.exampleData = {
+                                            displayKey: 'num',
+                                            source: engine.ttAdapter()
+                                        };*/
+
+                                        $element.typeahead(settings.options, settings.datasets)
+                                        .on('$destroy', function () {
+                                            $element.typeahead('destroy');
+                                        })
+                                        .on('typeahead:selected', function(event, suggestion, datasetName) {
+                                            updateModel(suggestion);
+                                            console.info('TYPEAHEAD:SELECTED', suggestion);
+                                            //$scope.$emit('typeahead:selected', suggestion, dataset);
+                                        })
+                                        .on('input', function(event) {
+                                            var value = $element.typeahead('val');
+                                            updateModel(value);
+                                            console.info('TYPEAHEAD:INPUT', value);
+                                            //$scope.$emit('typeahead:selected', suggestion, dataset);
+                                        });
+
+                                        return tyhead;
+
+                                        function updateModel(value) {
+                                            $scope.$apply(function () {
+                                                $scope.model = value;
+                                            });
+                                        }
+
+                                        /*function createEngine(source) {
                                             var defaults = {
                                                 dupDetector: function (remoteMatch, localMatch) {
-                                                    console.info('TYPEAHEAD:COMPARISON_DUPLICATE', remoteMatch, localMatch);
+                                                    //console.info('TYPEAHEAD:COMPARISON_DUPLICATE', remoteMatch, localMatch);
                                                     return angular.equals(remoteMatch, localMatch);
                                                 },
                                                 prefetch: {
-                                                    ttl: 0,
+                                                    ttl: 60000000,
                                                     ajax: {
-                                                        beforeSend: function (xhr) {
+                                                        beforeSend: function (xhr, settings) {
                                                             console.info('TYPEAHEAD:AJAX:BEFORE (prefetch)');
-                                                            $scope.$emit('typeahead:ajax:before', xhr);
+                                                            $scope.$emit('typeahead:ajax:before', xhr, settings);
                                                         },
                                                         success: function (data, textStatus, xhr) {
                                                             console.info('TYPEAHEAD:AJAX:SUCCESS (prefetch)');
@@ -78,9 +571,9 @@
                                                 remote: {
                                                     ttl: 0,
                                                     ajax: {
-                                                        beforeSend: function (xhr) {
+                                                        beforeSend: function (xhr, settings) {
                                                             console.info('TYPEAHEAD:AJAX:BEFORE (remote)');
-                                                            $scope.$emit('typeahead:ajax:before', xhr);
+                                                            $scope.$emit('typeahead:ajax:before', xhr, settings);
                                                         },
                                                         success: function (data, textStatus, xhr) {
                                                             console.info('TYPEAHEAD:AJAX:SUCCESS (remote)');
@@ -107,123 +600,74 @@
 
                                             var opts = $.extend(true, {}, defaults, source);
                                             return new Bloodhound(opts);
-                                        };
-
-                                        // fix templates
-                                        if (angular.isDefined(settings.datasets.templates)) {
-                                            for (var template in settings.datasets.templates) {
-                                                if (settings.datasets.templates.hasOwnProperty(template) &&
-                                                        'string' === typeof settings.datasets.templates[template]) {
-                                                    settings.datasets.templates[template] = (function (html) {
-                                                        return function (scope) {
-                                                            var newScope = $rootScope.$new(true);
-                                                            angular.copy(scope, newScope);
-                                                            return $compile(html)(newScope);
-                                                        };
-                                                        /*return function (scope) {
-                                                            console.log('AAA',html);
-                                                            for (var key in scope) {
-                                                                if (scope.hasOwnProperty(key)) {
-                                                                    html = html.replace(new RegExp('{{\\s*'+key+'\s*}}', 'gi'), scope[key]);
-                                                                }
-                                                            }
-                                                            return html;
-                                                        };*/
-                                                    })(settings.datasets.templates[template]);
-                                                }
-                                            }
-                                        }
-
-                                        // cria a engine de sugestões
-                                        var engine = $scope.$engine = createEngine(settings.datasets.source);
-                                        settings.datasets.source = engine.ttAdapter();
-                                        console.log('opcoes do bloodhound',settings);
-
-                                        // inicia a engine de sugestões
-                                        var promise = engine.initialize();
-
-                                        // mapeia events de ajax do bloodhound para outros controllers
-                                        promise
-                                        .done(function (xhr) {
-                                            console.info('TYPEAHEAD:AJAX:DONE');
-                                            $scope.$emit('typeahead:ajax:done', xhr);
-                                        })
-                                        .fail(function (xhr) {
-                                            console.info('TYPEAHEAD:AJAX:FAIL');
-                                            $scope.$emit('typeahead:ajax:fail', xhr);
-                                        })
-                                        .always(function (xhr) {
-                                            console.info('TYPEAHEAD:AJAX:ALWAYS');
-                                            $scope.$emit('typeahead:ajax:always', xhr);
-                                            //$scope.$apply();
-                                        });
-
-                                        /**
-                                         * Adiciona um valor ao banco de sugestões
-                                         *
-                                         * @param {Object} value
-                                         * @returns {void}
-                                         */
-                                        $scope.addValue = function (value) {
-                                            if (!angular.isObject(value)) {
-                                                throw new Error('O valor deve ser sempre um objeto');
-                                            }
-                                            engine.add([value]);
-                                        };
-
-                                        /**
-                                         * Apaga o cache de sugestões da requisição
-                                         * prefetch
-                                         *
-                                         * @returns {void}
-                                         */
-                                        $scope.clearPrefetchCache = function () {
-                                            engine.clearPrefetchCache();
-                                        };
-
-                                        /**
-                                         * Apaga o cache de sugestões da requisição
-                                         * remote
-                                         *
-                                         * @returns {void}
-                                         */
-                                        $scope.clearRemoteCache = function () {
-                                            engine.clearRemoteCache();
-                                        };
-
-                                        /*$scope.exampleData = {
-                                            displayKey: 'num',
-                                            source: engine.ttAdapter()
-                                        };*/
-
-                                        $element.typeahead(settings.options, settings.datasets);
+                                        };/**/
                                     }
                                 ],
                                 link: function postLink($scope, $element, $attrs, ngModel) {
                                     //$element.typeahead({}, [$scope.exampleData]);
 
-                                    // Update the value binding when a value is manually selected from the dropdown.
-                                    $element.bind('typeahead:selected', function(object, suggestion, dataset) {
-                                        var value = suggestion;
-                                        $scope.$apply(function () {
-                                            ngModel.$setViewValue(value);
-                                        });
-                                        console.info('TYPEAHEAD:SELECTED', value);
+                                    // Parses and validates what is going to be set to model (called when: ngModel.$setViewValue(value))
+                                    /*ngModel.$parsers.unshift(function(fromView) {
+                                        // Assuming that all objects are datums
+                                        // See typeahead basics: https://gist.github.com/jharding/9458744#file-the-basics-js-L15
+                                        var isDatum = angular.isObject(fromView);
+                                        if (options.editable === false) {
+                                            ngModel.$setValidity('typeahead', isDatum);
+                                            return isDatum ? fromView : undefined;
+                                        }
+
+                                        return fromView;
+                                    });*/
+                                    /*ngModel.$render = function() {
+
+                                    };*/
+
+                                    /*ngModel.$formatters.unshift(function(fromModel) {
+                                        return fromModel;
+                                    });*/
+
+                                    /*$element.bind('typeahead:closed', function() {
+                                        //$scope.$apply();
+                                        console.info('TYPEAHEAD:CLOSED');
+                                        //$scope.$emit('typeahead:selected', suggestion, dataset);
+                                    });
+
+                                    $element.bind('typeahead:cursorchanged', function(event, suggestion, datasetName) {
+                                        //$scope.$apply();
+                                        console.info('TYPEAHEAD:CURSOR_CHANGED', suggestion);
+                                        //$scope.$emit('typeahead:selected', suggestion, dataset);
+                                    });
+
+
+                                    $element.bind('typeahead:selected', function(event, suggestion, datasetName) {
+
+                                        ngModel.$setViewValue(angular.copy(suggestion));
+                                        $scope.$apply();
+
+                                        console.info('TYPEAHEAD:SELECTED', suggestion);
                                         //$scope.$emit('typeahead:selected', suggestion, dataset);
                                     });
 
                                     // Update the value binding when a query is autocompleted.
-                                    $element.bind('typeahead:autocompleted', function(object, suggestion, dataset) {
-                                        var value = suggestion;
-                                        $scope.$apply(function () {
-                                            ngModel.$setViewValue(value);
-                                        });
-                                        console.info('TYPEAHEAD:AUTOCOMPLETED', value);
+                                    /*$element.bind('typeahead:autocompleted', function(event, suggestion, datasetName) {
+                                        //ngModel.$setViewValue(suggestion);
+                                        //$element.typeahead('val', suggestion);
+                                        $scope.$apply();
+                                        console.info('TYPEAHEAD:AUTOCOMPLETED', suggestion);
                                       //updateScope(object, suggestion, dataset);
                                       //$scope.$emit('typeahead:autocompleted', suggestion, dataset);
-                                    });
+                                    });*/
 
-                                    $element.bind('input', function () {
+                                    $scope.$watch('model', function (newv, oldv) {
+                                        console.warn('MUDOU DE ', oldv, 'PARA', newv);
+                                    }, true);
+
+                                    /*setInterval(function () {
+                                        console.warn('digestou');
+                                        $scope.$digest();
+                                    }, 1000);*/
+
+                                    /*$element.bind('input', function () {
                                         //var preservePos = getCursorPosition(element);
                                         var value = $element.typeahead('val');
                                         $scope.$apply(function () {
@@ -231,7 +675,7 @@
                                         });
                                         console.info('TYPEAHEAD:INPUT', value);
                                         //setCursorPosition(element, preservePos);
-                                    });
+                                    });*/
                                     //console.log($scope);
                                 }
                             };
@@ -260,12 +704,22 @@
                         }
                     ])
                     .controller('TesteCtrl', [
-                        '$scope',
-                        function ($scope) {
+                        '$scope', '$idle',
+                        function ($scope, $idle) {
                             $scope.conteudo = {};
                             $scope.conteudo.title = 'aaa';
 
                             $scope.teste = '';
+
+                            $scope.status = ['online'];
+
+                            $idle.on('active', function () {
+                                $scope.status.push('back!');
+                            }).on('away', function () {
+                                $scope.status.push('away...');
+                            }).on('idle', function () {
+                                $scope.status.push('idle......');
+                            });
 
                             $scope.options = {
                                 options: {
