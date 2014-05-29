@@ -20,280 +20,74 @@
 
             {{ status }}</pre>
 
+            <input type='number' ng-model='timeout'/>
+            <div data-brd-show-away='timeout'>Estou away!</div>
+
         </div>
 
         <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
         <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.js"></script>
+<!--        <script src="http://code.angularjs.org/1.3.0-beta.10/angular.js"></script>
+        <script src="http://code.angularjs.org/1.3.0-beta.10/angular-animate.min.js"></script>-->
+        <script src="src/js/broda-awaydetector.js"></script>
+        <script src="src/js/broda-typeahead.js"></script>
         <script>
 
             function $typeaheadObject () {}
 
-            angular.module('idle', [], [
-                '$provide',
-                function ($provide) {
-                    $provide.provider('$idle',
-                    function () {
+            angular.module('teste', ['broda.typeahead'])
+                .controller('TesteCtrl', [
+                        '$scope',
+                        function ($scope) {
+                            $scope.conteudo = {};
+                            $scope.conteudo.title = 'aaa';
 
-                        function Idler($doc, $timeout) {
-                            // private ----
-                            var that = this,
-                                away = false,
-                                awayTimer = null,
-                                awayTimestamp,
-                                idle = false,
-                                idleTimer = null,
-                                idleTimestamp,
+                            $scope.teste = '';
 
-                                callbacks = {
-                                    active: [],
-                                    away: [],
-                                    idle: []
-                                };
-
-                            /**
-                             * Define o timeout do idle
-                             *
-                             * @private
-                             * @returns {void}
-                             */
-                            function setIdleTimeout() {
-                                var ms = that.defaults.idleTimeout;
-                                idleTimestamp = new Date().getTime() + ms;
-                                if (idleTimer != null) {
-                                    try {
-                                        idleTimer.cancel();
-                                    } catch(e){}
-                                }
-                                idleTimer = $timeout(that.makeIdle, ms + 50);
-                                console.log('idle in ' + ms + ', tid = ' + idleTimer);
-                            }
-
-                            /**
-                             * Define o timeout do away
-                             *
-                             * @private
-                             * @returns {void}
-                             */
-                            function setAwayTimeout() {
-                                var ms = that.defaults.awayTimeout;
-                                awayTimestamp = new Date().getTime() + ms;
-                                if (awayTimer != null) {
-                                    try {
-                                        awayTimer.cancel();
-                                    } catch(e){}
-                                }
-                                awayTimer = $timeout(that.makeAway, ms + 50);
-                                console.log('away in ' + ms + ', tid = ' + awayTimer);
-                            }
-
-                            /**
-                             * Constructor
-                             *
-                             * @returns {void}
-                             */
-                            function init () {
-                                var d = $doc[0];
-                                // detecta variaveis para a visibilidade de troca de abas
-                                var hidden, state, visibilityChange;
-                                if (typeof d.hidden !== "undefined") {
-                                    hidden = "hidden";
-                                    visibilityChange = "visibilitychange";
-                                    state = "visibilityState";
-                                } else if (typeof d.mozHidden !== "undefined") {
-                                    hidden = "mozHidden";
-                                    visibilityChange = "mozvisibilitychange";
-                                    state = "mozVisibilityState";
-                                } else if (typeof d.msHidden !== "undefined") {
-                                    hidden = "msHidden";
-                                    visibilityChange = "msvisibilitychange";
-                                    state = "msVisibilityState";
-                                } else if (typeof d.webkitHidden !== "undefined") {
-                                    hidden = "webkitHidden";
-                                    visibilityChange = "webkitvisibilitychange";
-                                    state = "webkitVisibilityState";
-                                }
-
-                                d.addEventListener(visibilityChange, function() {
-                                    if (d[state] === hidden) {
-                                        // away
-                                        //console.log('away from tab change');
-                                        idleTimestamp = awayTimestamp = (new Date).getTime();
-                                        that.makeAway();
-                                        that.makeIdle();
-                                    } else {
-                                        // online
-                                        //console.log('active from tab change');
-                                        that.makeActive();
-                                    }
-                                }, false);
-
-                                $doc.on([
-                                'mousemove',
-                                'mouseenter',
-                                'scroll',
-                                'keydown',
-                                'click',
-                                'dblclick'
-                                ].join(' '), function () {
-                                    that.makeActive();
-                                });
-
-                                setIdleTimeout(that.defaults.idleTimeout);
-                                setAwayTimeout(that.defaults.awayTimeout);
-
-                            }
-
-                            // protected -----
-                            this.defaults = {
-                                awayTimeout: 7000,
-                                idleTimeout: 16000
-                            };
-
-                            /**
-                             * Retorna se está idle ou não
-                             *
-                             * @returns {Boolean}
-                             */
-                            this.isIdle = function () {
-                                return idle;
-                            };
-
-                            /**
-                             * Retorna se está away ou não
-                             *
-                             * @returns {Boolean}
-                             */
-                            this.isAway = function () {
-                                return away;
-                            };
-
-                            /**
-                             * Retorna se está online ou não
-                             *
-                             * @returns {Boolean}
-                             */
-                            this.isActive = function () {
-                                return !idle && !away;
-                            };
-
-                            /**
-                             * Adiciona um callback a cadeia de callbacks a serem
-                             * chamados quando o status é mudado.
-                             *
-                             * Possíveis valores para o evento: 'idle', 'away', 'active'
-                             *
-                             * @param {String} eventName
-                             * @param {Function} callback
-                             * @returns {void}
-                             */
-                            this.addCallback = function (eventName, callback) {
-                                switch (true) {
-                                    case (eventName === 'idle'):
-                                    case (eventName === 'away'):
-                                    case (eventName === 'active'):
-                                        callbacks[eventName].push(callback);
-                                        break;
-                                    default:
-                                        throw new Error('Evento '+eventName+' não suportado pelo $idle');
-                                }
-                            };
-
-                            this.makeIdle = function () {
-                                var t = new Date().getTime();
-                                if (t < idleTimestamp) {
-                                    console.log('Not idle yet. Idle in ' + (idleTimestamp - t + 50));
-                                    idleTimer = $timeout(that.makeIdle, idleTimestamp - t + 50);
-                                    return;
-                                }
-
-                                try {
-                                    if (!idle) {
-                                        for (var i = 0; i < callbacks.idle.length; i++) {
-                                            callbacks.idle[i]();
+                            $scope.options = {
+                                options: {
+                                    highlight: true,
+                                    hint: true,
+                                    minLength: 1
+                                },
+                                datasets: //[
+                                    {
+                                        name: 'numeros',
+                                        displayKey: 'num',
+                                        templates: {
+                                            empty: '<div>Nenhum registro encontrado para {{query}}</div>',
+                                            footer: '<div>Pesquisa para {{query}}<span ng-show="isEmpty"> - mais resultados</span></div>',
+                                            header: '<h3>Numeros (com {{query}})</h3>',
+                                            suggestion: '<p>Número {{num}}</p>'
+                                        },
+                                        source: {
+                                            datumTokenizer: function (datum) {
+                                                return datum.num.split(/\s+/);
+                                            },
+                                            queryTokenizer: function (query) {
+                                                return query.split(/\s+/);
+                                            },
+                                            limit: 10,
+                                            //dupDetector: function (r, l) {},
+                                            //sorter: function (v1,v2) {},
+                                            local: [
+                                                {num: 'one'},
+                                                {num: 'two'},
+                                                {num: 'three'},
+                                                {num: 'four'}
+                                            ],
+                                            prefetch: 'prefetch',
+                                            remote: 'remote/%QUERY'
                                         }
                                     }
-                                } catch (err) {
-                                }
-
-                                console.log('** IDLE **');
-                                idle = true;
+                                //]
                             };
-
-                            this.makeAway = function () {
-                                var t = new Date().getTime();
-                                if (t < awayTimestamp) {
-                                    console.log('Not away yet. Away in ' + (awayTimestamp - t + 50));
-                                    awayTimer = $timeout(that.makeAway, awayTimestamp - t + 50);
-                                    return;
-                                }
-
-                                try {
-                                    if (!away) {
-                                        for (var i = 0; i < callbacks.away.length; i++) {
-                                            callbacks.away[i]();
-                                        }
-                                    }
-                                } catch (err) {
-                                }
-
-                                console.log('** AWAY **');
-                                away = true;
-                            };
-
-                            this.makeActive = function () {
-                                var t = new Date().getTime();
-                                idleTimestamp = t + that.defaults.idleTimeout;
-                                awayTimestamp = t + that.defaults.awayTimeout;
-                                //console.log('not idle.');
-
-                                if (idle) {
-                                    setIdleTimeout();
-                                }
-
-                                if (away) {
-                                    setAwayTimeout();
-                                }
-
-                                try {
-                                    if (idle || away) {
-                                        console.log('** BACK **');
-                                        $timeout(function () {
-                                            for (var i = 0; i < callbacks.active.length; i++) {
-                                                callbacks.active[i]();
-                                            }
-                                        }, 0);
-                                    }
-                                } catch (err) {
-                                }
-
-                                idle = false;
-                                away = false;
-                            };
-
-                            // inicializa o idler
-                            init();
-
                         }
+                    ]);
 
-                        Idler.prototype.constructor = Idler;
-                        Idler.prototype.on = function (eventName, callback) {
-                            this.addCallback(eventName, callback);
-                            return this;
-                        };
-
-                        this.$get = [
-                            '$document', '$timeout',
-                            function ($document, $timeout) {
-                                return new Idler($document, $timeout);
-                            }
-                        ];
-                    });
-                }
-            ]);
-
-            angular.module('teste', ['idle'], [
+            angular.module('teste2', ['broda.awayDetector'], [
                         '$provide',
                         function ($provide) {
 
@@ -453,7 +247,7 @@
                                         tyhead.engine = $typeahead.engine.create(settings.datasets.source);
                                         settings.datasets.source = tyhead.engine.ttAdapter();
                                         tyhead.engine = tyhead.engine.initialize();
-                                        
+
                                         // mapeia events de ajax do bloodhound para outros controllers
                                         tyhead.engine
                                         .done(function (data, textStatus, xhr) {
@@ -704,7 +498,7 @@
                         }
                     ])
                     .controller('TesteCtrl', [
-                        '$scope', '$idle',
+                        '$scope', '$awaylistener',
                         function ($scope, $idle) {
                             $scope.conteudo = {};
                             $scope.conteudo.title = 'aaa';
@@ -713,7 +507,9 @@
 
                             $scope.status = ['online'];
 
-                            $idle.on('active', function () {
+                            $scope.timeout = 2000;
+
+                            $idle.listen().on('active', function () {
                                 $scope.status.push('back!');
                             }).on('away', function () {
                                 $scope.status.push('away...');
@@ -723,7 +519,7 @@
 
                             $scope.options = {
                                 options: {
-                                    highlight: false,
+                                    highlight: true,
                                     hint: true,
                                     minLength: 1
                                 },
