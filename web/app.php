@@ -153,12 +153,16 @@ $app->get('/prefetch', function () use ($app) {
 });
 
 $app->get('/remote/{query}', function ($query = null) use ($app) {
-    return new \Symfony\Component\HttpFoundation\JsonResponse(array(
+    $response = array(
         array('num' => 'one'),
         array('num' => 'thousand'),
         array('num' => 'hundred'),
         array('num' => 'a thousand'),
-    ));
+    );
+    $response = array_filter($response, function ($val) use ($query) {
+        return false !== strpos($val['num'], $query);
+    });
+    return new \Symfony\Component\HttpFoundation\JsonResponse($response);
 });
 
 $app->get('/upload', 'reacao.controller.publish:get');

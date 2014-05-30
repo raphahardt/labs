@@ -11,14 +11,80 @@
 
         <div ng-app="teste" ng-controller="TesteCtrl" style="padding: 50px;">
 
+            <script id="teste/teste.html" type="text/ng-template">
+                <div>
+                    <strong>{{ id }}</strong>
+                </div>
+            </script>
+
+            <div data-datatable="optionsDt">
+
+                <!--<p>Procurar: <input type="search" data-datatable-search data-for="'nomecoluna'" ng-model="dt_busca" /></p>-->
+                <p>Procurar: <input type="search" data-datatable-search ng-model="dt_busca" /></p>
+
+                <p>Por página:
+                    <select data-datatable-length ng-model="dt_tamanho">
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </p>
+
+                <div data-datatable-pagination data-in="pages" data-watch="dt_page">
+                    Página:
+                    <ul>
+                        <li ng-repeat="page in pages track by page.index">
+                            <button type="button" ng-click="dt_page = page.index" ng-class="{ active: page.active }">
+                                {{ page.index }}</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div data-datatable-info data-in="dt_info">
+                    Mostrando {{ dt_info.start }} até {{ dt_info.end }} de {{ dt_info.total }}
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-name="coluna1"
+                                data-template="teste/teste.html"
+                                data-visible="expr === true">Coluna 1</th>
+                        </tr>
+                    </thead>
+                </table>
+
+            </div>
+
+            <pre>
+Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
+            </pre>
+
             <button class="btn btn-default" data-tooltip="conteudo" data-placement="right">teste</button>
 
             <input type="text" ng-model="conteudo.title"/>
 
+            <span ng-show="carregando">Carregando...</span>
             <input type="text" data-typeahead="options" data-model="teste" />
-            <pre>{{ teste |json }}
 
-            {{ status }}</pre>
+            <p>Hint? <input type="checkbox" ng-model="options.options.hint"/></p>
+            <p>highlight? <input type="checkbox" ng-model="options.options.highlight"/></p>
+            <p>minLength? <input type="number" ng-model="options.options.minLength"/></p>
+
+            <div><h3>local</h3>
+                <ul>
+                    <li ng-repeat="num in local"><input ng-model="num.num"><button type="button" ng-click="remove($index)">rem</button></li>
+                    <li><input ng-model="newNum"><button type="button" ng-click="adiciona(newNum); newNum = ''">add</button></li>
+                </ul>
+            </div>
+
+            <pre>
+{{ options | json }}
+
+{{ teste |json }}
+
+{{ status }}</pre>
 
             <input type='number' ng-model='timeout'/>
             <div data-brd-show-away='timeout'>Estou away!</div>
@@ -33,11 +99,12 @@
         <script src="http://code.angularjs.org/1.3.0-beta.10/angular-animate.min.js"></script>-->
         <script src="src/js/broda-awaydetector.js"></script>
         <script src="src/js/broda-typeahead.js"></script>
+        <script src="src/js/broda-datatable.js"></script>
         <script>
 
             function $typeaheadObject () {}
 
-            angular.module('teste', ['broda.typeahead'])
+            angular.module('teste', ['broda.typeahead', 'broda.datatable'])
                 .controller('TesteCtrl', [
                         '$scope',
                         function ($scope) {
@@ -46,13 +113,30 @@
 
                             $scope.teste = '';
 
+                            $scope.local = [
+                                {num: 'one'},
+                                {num: 'two'},
+                                {num: 'three'},
+                                {num: 'four'}
+                            ];
+
+                            $scope.adiciona = function (val) {
+                                $scope.local.push({num: val});
+                            };
+
+                            $scope.remove = function (i) {
+                                $scope.local.splice(i, 1);
+                            };
+
+                            $scope.carregando = false;
+
                             $scope.options = {
                                 options: {
                                     highlight: true,
                                     hint: true,
                                     minLength: 1
                                 },
-                                datasets: //[
+                                datasets: [
                                     {
                                         name: 'numeros',
                                         displayKey: 'num',
@@ -72,413 +156,58 @@
                                             limit: 10,
                                             //dupDetector: function (r, l) {},
                                             //sorter: function (v1,v2) {},
-                                            local: [
-                                                {num: 'one'},
-                                                {num: 'two'},
-                                                {num: 'three'},
-                                                {num: 'four'}
-                                            ],
+                                            local: $scope.local,
                                             prefetch: 'prefetch',
-                                            remote: 'remote/%QUERY'
+                                            remote: {
+                                                url: 'remote/%QUERY',
+                                                ajax: {
+                                                    beforeSend: function () {
+                                                        $scope.carregando = true;
+                                                    },
+                                                    complete: function () {
+                                                        $scope.carregando = false;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        name: 'letras',
+                                        displayKey: 'letter',
+                                        templates: {
+                                            empty: '<div>Nenhuma letra encontrada para {{query}}</div>',
+                                            footer: '<div>Pesquisa de letra para {{query}}<span ng-show="isEmpty"> - mais resultados</span></div>',
+                                            header: '<h3>Letras (com {{query}})</h3>',
+                                            suggestion: '<p>Letra {{letter}}</p>'
+                                        },
+                                        source: {
+                                            datumTokenizer: function (datum) {
+                                                return datum.letter.split(/\s+/);
+                                            },
+                                            queryTokenizer: function (query) {
+                                                return query.split(/\s+/);
+                                            },
+                                            limit: 5,
+                                            //dupDetector: function (r, l) {},
+                                            //sorter: function (v1,v2) {},
+                                            local: [
+                                                {letter: 'ei'},
+                                                {letter: 'bee'},
+                                                {letter: 'see'},
+                                                {letter: 'dee'},
+                                                {letter: 'e'},
+                                                {letter: 'ef'},
+                                                {letter: 'gee'},
+                                                {letter: 'eich'}
+                                            ]
                                         }
                                     }
-                                //]
+                                ]
                             };
                         }
                     ]);
 
-            angular.module('teste2', ['broda.awayDetector'], [
-                        '$provide',
-                        function ($provide) {
-
-                            /**
-                             * Provider do typeahead
-                             *
-                             * Para configurar, altere as propriedades em $typeaheadProvider.defaults
-                             */
-                            $provide.provider('$typeahead',
-                            function () {
-                                var $th = this;
-                                /**
-                                 * Propriedades padrão do typeahead
-                                 * @var {Object}
-                                 */
-                                this.defaults = {
-                                    options: {
-                                        highlight: false,
-                                        hint: true,
-                                        minLength: 1
-                                    },
-                                    datasets: {}
-                                };
-
-                                /**
-                                 * Propriedades padrão do typeahead para os datasets
-                                 * @var {Object}
-                                 */
-                                this.datasetDefaults = {
-                                    dupDetector: function (remoteMatch, localMatch) {
-                                        return angular.equals(remoteMatch, localMatch);
-                                    }
-                                };
-
-                                this.$get = [
-                                    '$window', '$compile', '$rootScope',
-                                    function ($window, $compile, $rootScope) {
-                                        /**
-                                         * Compilador para templates do bloodhound
-                                         *
-                                         * @returns {Compiler}
-                                         */
-                                        function Compiler() {
-                                            this.html = '';
-                                            this.link = function (){};
-                                        };
-
-                                        /**
-                                         * Cria uma função de link para compilar os templates
-                                         *
-                                         * Irá retornar uma função com a assinatura function (context) {}
-                                         * que irá inserir os valores interpolados corretos no template
-                                         * pré-compilado
-                                         *
-                                         * @param {String} html HTML do template a ser pré-compilado
-                                         * @returns {Function}
-                                         */
-                                        Compiler.prototype.create = function (html) {
-                                            var that = this;
-                                            this.html = html;
-                                            this.link = $compile(this.html);
-                                            return function (context) {
-                                                var scope = $rootScope.$new(true), // scope temporario para o $compile
-                                                    compiled,
-                                                    wrap;
-                                                for (var key in context) {
-                                                    if (context.hasOwnProperty(key)) {
-                                                        scope[key] = context[key];
-                                                    }
-                                                }
-                                                compiled = that.link(scope);
-                                                scope.$digest();
-                                                scope.$destroy(); // não preciso mais do scope
-
-                                                wrap = $window.document.createElement('div');
-                                                wrap.appendChild(compiled.clone()[0]);
-                                                return wrap.innerHTML;
-                                            };
-                                        };
-
-                                        /**
-                                         * Engine de sugestões do typeahead
-                                         *
-                                         * @returns {Bloodhound}
-                                         */
-                                        function Bloodhound() {
-                                            this.bh = $window.Bloodhound;
-                                        }
-
-                                        /**
-                                         * Cria a engine de sugestões do typeahead
-                                         *
-                                         * @param {Object} source
-                                         * @returns {window.Bloodhound}
-                                         */
-                                        Bloodhound.prototype.create = function(source) {
-                                            var engine,
-                                                options = {};
-
-                                            // fix prefetch e remote
-                                            if ('string' === typeof source.prefetch) {
-                                                source.prefetch = { url: source.prefetch };
-                                            }
-                                            if ('string' === typeof source.remote) {
-                                                source.remote = { url: source.remote };
-                                            }
-
-                                            options = $.extend(true, $th.datasetDefaults, source);
-                                            var engine = new this.bh(options);
-
-                                            source = engine.ttAdapter();
-                                            return engine;
-                                        };
-
-                                        return {
-                                            compiler: new Compiler(),
-                                            engine: new Bloodhound()
-                                        };
-                                    }
-                                ];
-                            });
-                        }
-                    ])
-
-
-
-                    .directive('typeahead', [
-                        '$typeahead',
-                        /**
-                         *
-                         * @param {Object} $typeahead
-                         */
-                        function ($typeahead) {
-                            return {
-                                restrict: 'A',
-                                //require: 'ngModel',
-                                scope: {
-                                    options: '=typeahead',
-                                    model: '=model'
-                                },
-                                controller: [
-                                    '$scope', '$element', '$attrs',
-                                    function ($scope, $element, $attrs) {
-                                        var settings = $scope.options;
-                                        var tyhead = this;
-
-                                        // fix templates
-                                        if (angular.isDefined(settings.datasets.templates)) {
-                                            angular.forEach(settings.datasets.templates, function (value, key) {
-                                                if ('string' === typeof value) {
-                                                    settings.datasets.templates[key] = $typeahead.compiler.create(value);
-                                                }
-                                            });
-                                        }
-
-                                        // cria a engine de sugestões
-                                        tyhead.engine = $typeahead.engine.create(settings.datasets.source);
-                                        settings.datasets.source = tyhead.engine.ttAdapter();
-                                        tyhead.engine = tyhead.engine.initialize();
-
-                                        // mapeia events de ajax do bloodhound para outros controllers
-                                        tyhead.engine
-                                        .done(function (data, textStatus, xhr) {
-                                            console.info('TYPEAHEAD:AJAX:DONE');
-                                            $scope.$emit('typeahead:ajax:done', xhr, data);
-                                        })
-                                        .fail(function (xhr, textStatus, errorThrown) {
-                                            console.info('TYPEAHEAD:AJAX:FAIL');
-                                            $scope.$emit('typeahead:ajax:fail', xhr, errorThrown);
-                                        })
-                                        .always(function (a, textStatus) {
-                                            console.info('TYPEAHEAD:AJAX:ALWAYS');
-                                            if (textStatus !== 'success') {
-                                                // on error, arguments changes places
-                                                $scope.$emit('typeahead:ajax:always', arguments[0], textStatus, arguments[2]);
-                                            } else {
-                                                $scope.$emit('typeahead:ajax:always', arguments[2], textStatus, arguments[0]);
-                                            }
-                                            //$scope.$apply();
-                                        });
-
-                                        /**
-                                         * Adiciona um valor ao banco de sugestões
-                                         *
-                                         * @param {Object} value
-                                         * @returns {void}
-                                         */
-                                        tyhead.$addValue = function (value) {
-                                            if (!angular.isObject(value)) {
-                                                throw new Error('O valor deve ser sempre um objeto');
-                                            }
-                                            tyhead.$engine.add([value]);
-                                        };
-
-                                        /**
-                                         * Apaga o cache de sugestões da requisição
-                                         * prefetch
-                                         *
-                                         * @returns {void}
-                                         */
-                                        tyhead.$clearPrefetchCache = function () {
-                                            tyhead.$engine.clearPrefetchCache();
-                                        };
-
-                                        /**
-                                         * Apaga o cache de sugestões da requisição
-                                         * remote
-                                         *
-                                         * @returns {void}
-                                         */
-                                        tyhead.$clearRemoteCache = function () {
-                                            tyhead.$engine.clearRemoteCache();
-                                        };
-
-                                        tyhead.$abort = function () {
-                                            tyhead.engine.abort();
-                                        };
-
-                                        /*$scope.exampleData = {
-                                            displayKey: 'num',
-                                            source: engine.ttAdapter()
-                                        };*/
-
-                                        $element.typeahead(settings.options, settings.datasets)
-                                        .on('$destroy', function () {
-                                            $element.typeahead('destroy');
-                                        })
-                                        .on('typeahead:selected', function(event, suggestion, datasetName) {
-                                            updateModel(suggestion);
-                                            console.info('TYPEAHEAD:SELECTED', suggestion);
-                                            //$scope.$emit('typeahead:selected', suggestion, dataset);
-                                        })
-                                        .on('input', function(event) {
-                                            var value = $element.typeahead('val');
-                                            updateModel(value);
-                                            console.info('TYPEAHEAD:INPUT', value);
-                                            //$scope.$emit('typeahead:selected', suggestion, dataset);
-                                        });
-
-                                        return tyhead;
-
-                                        function updateModel(value) {
-                                            $scope.$apply(function () {
-                                                $scope.model = value;
-                                            });
-                                        }
-
-                                        /*function createEngine(source) {
-                                            var defaults = {
-                                                dupDetector: function (remoteMatch, localMatch) {
-                                                    //console.info('TYPEAHEAD:COMPARISON_DUPLICATE', remoteMatch, localMatch);
-                                                    return angular.equals(remoteMatch, localMatch);
-                                                },
-                                                prefetch: {
-                                                    ttl: 60000000,
-                                                    ajax: {
-                                                        beforeSend: function (xhr, settings) {
-                                                            console.info('TYPEAHEAD:AJAX:BEFORE (prefetch)');
-                                                            $scope.$emit('typeahead:ajax:before', xhr, settings);
-                                                        },
-                                                        success: function (data, textStatus, xhr) {
-                                                            console.info('TYPEAHEAD:AJAX:SUCCESS (prefetch)');
-                                                            $scope.$emit('typeahead:ajax:success', data, textStatus, xhr);
-                                                        },
-                                                        error: function (xhr, textStatus, errorThrown) {
-                                                            console.info('TYPEAHEAD:AJAX:ERROR (prefetch)');
-                                                            $scope.$emit('typeahead:ajax:error', xhr, textStatus, errorThrown);
-                                                        },
-                                                        complete: function (xhr, textStatus) {
-                                                            console.info('TYPEAHEAD:AJAX:COMPLETE (prefetch)');
-                                                            $scope.$emit('typeahead:ajax:complete', xhr, textStatus);
-                                                        }
-                                                    }
-                                                },
-                                                remote: {
-                                                    ttl: 0,
-                                                    ajax: {
-                                                        beforeSend: function (xhr, settings) {
-                                                            console.info('TYPEAHEAD:AJAX:BEFORE (remote)');
-                                                            $scope.$emit('typeahead:ajax:before', xhr, settings);
-                                                        },
-                                                        success: function (data, textStatus, xhr) {
-                                                            console.info('TYPEAHEAD:AJAX:SUCCESS (remote)');
-                                                            $scope.$emit('typeahead:ajax:success', data, textStatus, xhr);
-                                                        },
-                                                        error: function (xhr, textStatus, errorThrown) {
-                                                            console.info('TYPEAHEAD:AJAX:ERROR (remote)');
-                                                            $scope.$emit('typeahead:ajax:error', xhr, textStatus, errorThrown);
-                                                        },
-                                                        complete: function (xhr, textStatus) {
-                                                            console.info('TYPEAHEAD:AJAX:COMPLETE (remote)');
-                                                            $scope.$emit('typeahead:ajax:complete', xhr, textStatus);
-                                                        }
-                                                    }
-                                                }
-                                            };
-                                            // fix prefetch e remote
-                                            if ('string' === typeof source.prefetch) {
-                                                source.prefetch = { url: source.prefetch };
-                                            }
-                                            if ('string' === typeof source.remote) {
-                                                source.remote = { url: source.remote };
-                                            }
-
-                                            var opts = $.extend(true, {}, defaults, source);
-                                            return new Bloodhound(opts);
-                                        };/**/
-                                    }
-                                ],
-                                link: function postLink($scope, $element, $attrs, ngModel) {
-                                    //$element.typeahead({}, [$scope.exampleData]);
-
-                                    // Parses and validates what is going to be set to model (called when: ngModel.$setViewValue(value))
-                                    /*ngModel.$parsers.unshift(function(fromView) {
-                                        // Assuming that all objects are datums
-                                        // See typeahead basics: https://gist.github.com/jharding/9458744#file-the-basics-js-L15
-                                        var isDatum = angular.isObject(fromView);
-                                        if (options.editable === false) {
-                                            ngModel.$setValidity('typeahead', isDatum);
-                                            return isDatum ? fromView : undefined;
-                                        }
-
-                                        return fromView;
-                                    });*/
-                                    /*ngModel.$render = function() {
-
-                                    };*/
-
-                                    /*ngModel.$formatters.unshift(function(fromModel) {
-                                        return fromModel;
-                                    });*/
-
-                                    /*$element.bind('typeahead:closed', function() {
-                                        //$scope.$apply();
-                                        console.info('TYPEAHEAD:CLOSED');
-                                        //$scope.$emit('typeahead:selected', suggestion, dataset);
-                                    });
-
-                                    $element.bind('typeahead:cursorchanged', function(event, suggestion, datasetName) {
-                                        //$scope.$apply();
-                                        console.info('TYPEAHEAD:CURSOR_CHANGED', suggestion);
-                                        //$scope.$emit('typeahead:selected', suggestion, dataset);
-                                    });
-
-
-                                    $element.bind('typeahead:selected', function(event, suggestion, datasetName) {
-
-                                        ngModel.$setViewValue(angular.copy(suggestion));
-                                        $scope.$apply();
-
-                                        console.info('TYPEAHEAD:SELECTED', suggestion);
-                                        //$scope.$emit('typeahead:selected', suggestion, dataset);
-                                    });
-
-                                    // Update the value binding when a query is autocompleted.
-                                    /*$element.bind('typeahead:autocompleted', function(event, suggestion, datasetName) {
-                                        //ngModel.$setViewValue(suggestion);
-                                        //$element.typeahead('val', suggestion);
-                                        $scope.$apply();
-                                        console.info('TYPEAHEAD:AUTOCOMPLETED', suggestion);
-                                      //updateScope(object, suggestion, dataset);
-                                      //$scope.$emit('typeahead:autocompleted', suggestion, dataset);
-                                    });*/
-
-                                    $scope.$watch('model', function (newv, oldv) {
-                                        console.warn('MUDOU DE ', oldv, 'PARA', newv);
-                                    }, true);
-
-                                    /*setInterval(function () {
-                                        console.warn('digestou');
-                                        $scope.$digest();
-                                    }, 1000);*/
-
-                                    /*$element.bind('input', function () {
-                                        //var preservePos = getCursorPosition(element);
-                                        var value = $element.typeahead('val');
-                                        $scope.$apply(function () {
-                                            ngModel.$setViewValue(value);
-                                        });
-                                        console.info('TYPEAHEAD:INPUT', value);
-                                        //setCursorPosition(element, preservePos);
-                                    });*/
-                                    //console.log($scope);
-                                }
-                            };
-                        }
-                    ])
-
-
-
-
+            angular.module('teste2', ['broda.awayDetector'])
 
                     .directive('tooltip', [
                         function () {
