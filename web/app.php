@@ -152,6 +152,459 @@ $app->get('/prefetch', function () use ($app) {
     ));
 });
 
+$app->post('/ajax', function () use ($app) {
+    $string = <<<EOF
+    [
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },{
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },{
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },{
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      },
+      {
+        "name": "Tiger Nixon",
+        "position": "System Architect",
+        "salary": "$3,120",
+        "start_date": "2011/04/25",
+        "office": "Edinburgh",
+        "extn": 5421
+      },
+      {
+        "name": "Garrett Winters",
+        "position": "Director",
+        "salary": "5300",
+        "start_date": "2011/07/25",
+        "office": "Edinburgh",
+        "extn": "8422"
+      }
+    ]
+EOF;
+    return new \Symfony\Component\HttpFoundation\JsonResponse(array('data'=>json_decode($string)));
+});
+
 $app->get('/remote/{query}', function ($query = null) use ($app) {
     $response = array(
         array('num' => 'one'),

@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
         <link rel="stylesheet" href="http://twitter.github.io/typeahead.js/css/examples.css">
+        <link rel="stylesheet" href="//cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
     </head>
     <body>
 
@@ -13,17 +14,17 @@
 
             <script id="teste/teste.html" type="text/ng-template">
                 <div>
-                    <strong>{{ id }}</strong>
+                    <strong>{{ name }} - {{ $index }}</strong>
                 </div>
             </script>
 
-            <div data-datatable="optionsDt">
+            <div datatable="optionsDt" ng-init="col1 = 'name'; col2 = 'position'">
 
                 <!--<p>Procurar: <input type="search" data-datatable-search data-for="'nomecoluna'" ng-model="dt_busca" /></p>-->
-                <p>Procurar: <input type="search" data-datatable-search ng-model="dt_busca" /></p>
+                <p>Procurar: <input type="search" datatable-search ng-model="dt_busca" /></p>
 
                 <p>Por página:
-                    <select data-datatable-length ng-model="dt_tamanho">
+                    <select datatable-length ng-model="dt_tamanho">
                         <option value="20">20</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
@@ -31,7 +32,7 @@
                     </select>
                 </p>
 
-                <div data-datatable-pagination data-in="pages" data-watch="dt_page">
+                <div datatable-pagination in="pages" watch="dt_page">
                     Página:
                     <ul>
                         <li ng-repeat="page in pages track by page.index">
@@ -41,16 +42,28 @@
                     </ul>
                 </div>
 
-                <div data-datatable-info data-in="dt_info">
+                <div datatable-info in="dt_info">
                     Mostrando {{ dt_info.start }} até {{ dt_info.end }} de {{ dt_info.total }}
+                </div>
+
+                <div>
+                    <input ng-model="col1" ng-model-options="{updateOn:'blur'}"/>
+                    <input ng-model="col2" ng-model-options="{updateOn:'blur'}"/>
+                    <input type='checkbox' ng-model='col3v' />
                 </div>
 
                 <table>
                     <thead>
                         <tr>
-                            <th data-name="coluna1"
-                                data-template="teste/teste.html"
-                                data-visible="expr === true">Coluna 1</th>
+                            <th>Coluna 0</th>
+                            <th datatable-column name="{{col1}}"
+                                template="teste/teste.html"
+                                visible="{{col3v}}">Coluna 1</th>
+                            <th data-datatable-column name="{{col2}}"
+                                visible="true">Coluna 2</th>
+                            <th datatable-column="x" name="salary"
+                                visible="{{col3v}}">Coluna 3</th>
+                            <th>Coluna 4</th>
                         </tr>
                     </thead>
                 </table>
@@ -95,6 +108,7 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
         <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.js"></script>
+        <script src="//cdn.datatables.net/1.10.0/js/jquery.dataTables.js"></script>
 <!--        <script src="http://code.angularjs.org/1.3.0-beta.10/angular.js"></script>
         <script src="http://code.angularjs.org/1.3.0-beta.10/angular-animate.min.js"></script>-->
         <script src="src/js/broda-awaydetector.js"></script>
@@ -108,6 +122,9 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
                 .controller('TesteCtrl', [
                         '$scope',
                         function ($scope) {
+
+                            $scope.optionsDt = {};
+
                             $scope.conteudo = {};
                             $scope.conteudo.title = 'aaa';
 
