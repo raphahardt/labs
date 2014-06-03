@@ -21,7 +21,11 @@ fakeDtApi.prototype = {
   row: noop,
   rows: noop,
   search: noop,
-  draw: noop
+  draw: noop,
+  page: {
+    len: function(){return 0},
+    info: function(){return {}}
+  }
 };
 
 function DataTableProvider() {
@@ -29,13 +33,38 @@ function DataTableProvider() {
   var defaults = this.defaults = {
     // makes dataTables always returns the instancied api,
     // even if is not instancied yet
-    retrieve: true
+    retrieve: true,
+
+    ajax: 'ajax',
+    ajaxMethod: 'POST'
   };
 
   this.$get = [
     '$compile', '$http',
     function($compile, $http) {
+
+      /**
+       * Escapes the {{ }} interpolate symbols of values of datatables for
+       * possibilly security issues.
+       *
+       * @param {String} text
+       * @returns {String}
+       */
+      function escapeInterpolation(text) {
+        text = "" + text; // forces a string
+        if (angular.version.major >= 1 && angular.version.minor >= 3 || angular.version.major >= 2) {
+          // angular 1.3>= has \{\{ syntax
+          return text.replace(/{{/g, '\\{\\{').replace(/}}/g, '\\}\\}');
+        } else {
+          // angular 1.3< does not, so is better strip off this values
+          return text.replace(/[{}]/g, '');
+        }
+      }
+
       return {
+        escapeInterpolation: function (text) {
+          return escapeInterpolation(text);
+        },
         /**
          * Normalize a value to a boolean value.
          * Converts 'true' and 'false' strings properly.
@@ -64,7 +93,7 @@ function DataTableProvider() {
         makeSettings: function ($scope, opts, opts2) {
           var optsCopy = {};
 
-          optsCopy = $.extend(true, {}, opts, opts2);
+          optsCopy = $.extend(true, {}, defaults, opts, opts2);
 
           // only render the table, 'cuz other tools are handled by subdirectives
           // and by angular. This gives you total control of datatable's design
@@ -73,10 +102,12 @@ function DataTableProvider() {
           // rows are created as needed
           optsCopy.deferRender = true;
 
+          var method = optsCopy.ajaxMethod;
+          delete optsCopy.ajaxMethod;
           // triggered when data is get from server
           var ajaxUrl = optsCopy.ajax;
           optsCopy.ajax = function(sendData, cb, opts) {
-            $http.post(ajaxUrl, sendData)
+            $http({ method: method, url: ajaxUrl, data: sendData })
             .success(function(data) {
               console.warn('ajax done');
               cb(data);
@@ -93,7 +124,7 @@ function DataTableProvider() {
                 $row = angular.element(row);
 
             for(var key in data) {
-              rowScope[key] = data[key];
+              rowScope[key] = escapeInterpolation(data[key]);
             }
             rowScope.$index = index;
             rowScope.$even = (index % 2 === 0);
@@ -112,12 +143,14 @@ function DataTableProvider() {
                 rowScope = $row.data('scope');
 
             $row.replaceWith($compile($row)(rowScope));
+            rowScope.$evalAsync(); // schedule a digest if one is not already in progress
 
             console.warn('rowCallback', row);
           };
 
           optsCopy.drawCallback = function() {
             console.warn('drawCallback');
+            $scope.$broadcast('datatable:draw');
           };
 
           return optsCopy;
@@ -161,6 +194,8 @@ var DataTableController = [
         var settings = $datatable.makeSettings($scope, scopeSettings, controller.options);
         _api = table.DataTable(settings);
 
+        $scope.$broadcast('datatable:init');
+
         console.info('datatables initialized', _api);
       }
     }
@@ -168,8 +203,7 @@ var DataTableController = [
     //
     // controller options
     this.options = {
-      columns: [],
-      ajax: 'ajax'
+      columns: []
     };
 
     /*
@@ -194,6 +228,12 @@ var DataTableController = [
             return $templateCache.get(template);
           return data;
         };
+      } else {
+        col.render = function(data, type) {
+          if (type === 'display')
+            return $datatable.escapeInterpolation(data);
+          return data;
+        };
       }
 
       colAttrs.$observe('name', function (val) {
@@ -206,7 +246,11 @@ var DataTableController = [
       colAttrs.$observe('template', function (val) {
         if (template !== val) {
           if (!val) {
-            delete col.render;
+            col.render = function(data, type) {
+              if (type === 'display')
+                return $datatable.escapeInterpolation(data);
+              return data;
+            };
           } else {
             col.render = function(data, type) {
               if (type === 'display')
@@ -221,8 +265,8 @@ var DataTableController = [
 
       colAttrs.$observe('visible', function (val) {
         console.log('visible', colIndex, val);
-        controller.api().column( colIndex ).visible( $datatable.toBoolean(val) ).draw();
-        // must draw :(
+        controller.api().column( colIndex ).visible( $datatable.toBoolean(val) ).draw(false);
+        // must redraw :(
         // there is a bug if draw is not called: if table is initialized with columns invisible,
         // the cells are not compiled by angular, so a refresh is need
         // is lame, but is the only way
@@ -285,7 +329,7 @@ var DataTableDirective = [
   function ($compile) {
     return {
       restrict: 'AC',
-      scope: true,
+      //scope: true,
       controller: DataTableController
     };
   }
@@ -296,6 +340,12 @@ var DataTableColumnDirective = [
     return {
       restrict: 'AC',
       require: '^'+DATATABLE_DIRECTIVE_NAME,
+      controller: [
+        '$scope', '$element', '$attrs',
+        function(scope, element, attrs) {
+          this.index = element.index();
+        }
+      ],
       link: function(scope, element, attrs, ctrl) {
         var dt = ctrl;
 
@@ -307,20 +357,43 @@ var DataTableColumnDirective = [
 ];
 
 var DataTableSearchDirective = [
-  function () {
+  '$parse',
+  function ($parse) {
     return {
       restrict: 'AC',
       require: [
         '^'+DATATABLE_DIRECTIVE_NAME,
+        '?^'+DATATABLE_DIRECTIVE_NAME+'Column',
         '?ngModel'
       ],
       link: function(scope, element, attrs, ctrls) {
         var dt = ctrls[0],
-            model = ctrls[1] ? attrs.ngModel : attrs.watch;
+            forCol = ctrls[1] ? ctrls[1].index : (attrs[DATATABLE_DIRECTIVE_NAME+'Search'] || null),
+            model = ctrls[2] ? attrs.ngModel : attrs.watch,
+
+            modelGetter = $parse(model),
+            modelSetter = modelGetter.assign;
+
+        scope.$on('datatable:init', function() {
+          dt.api().on('search', function() {
+            console.log('mudou search por outro lugar')
+            modelSetter(scope, dt.api().search());
+          });
+        });
+
+        scope.$on('$destroy', function() {
+          dt.api().off('search');
+        });
 
         scope.$watch(model, function (newVal, oldVal) {
-          console.info('searching for ', newVal);
-          dt.api().search( newVal || '' ).draw();
+          if (newVal !== oldVal) {
+            console.info('searching for ', newVal, forCol);
+            var api = dt.api();
+            if (forCol) {
+              api = api.column( forCol );
+            }
+            api.search( newVal || '' ).draw();
+          }
         });
       }
     };
@@ -341,17 +414,107 @@ var DataTablePaginationDirective = [
             model = ctrls[1] ? attrs.ngModel : attrs.watch,
 
             inGetter = $parse(attrs.in),
+            inSetter = inGetter.assign,
+
+            pages = [];
+
+        if (!inSetter) return;
+
+        // define the page info for "in" attribute
+        scope.$on('datatable:draw', function () {
+          var info = dt.api().page.info();
+
+          pages = [];
+          for(var i=0; i<info.pages; i++) {
+            pages.push({
+              index: i,
+              active: i == info.page,
+              number: i + 1 // convenience
+            });
+          }
+
+          console.info('init pagination', pages, info);
+          inSetter(scope, pages);
+        });
+
+        scope.$watch(model, function (newVal, oldVal) {
+          console.info('pagination for ', newVal);
+          if (newVal !== oldVal) {
+            dt.api().page( newVal || 0 ).draw(false); // false to not reset dt (see http://datatables.net/reference/api/page() )
+
+            for(var i=0; i<pages; i++) {
+              pages[i].active = (i == newVal);
+            }
+            inSetter(scope, pages);
+          }
+        });
+      }
+    };
+  }
+];
+
+var DataTableLengthDirective = [
+  '$parse',
+  function ($parse) {
+    return {
+      restrict: 'AC',
+      require: [
+        '^'+DATATABLE_DIRECTIVE_NAME,
+        '?ngModel'
+      ],
+      link: function(scope, element, attrs, ctrls) {
+        var dt = ctrls[0],
+            model = ctrls[1] ? attrs.ngModel : attrs.watch,
+
+            modelGetter = $parse(model),
+            modelSetter = modelGetter.assign;
+
+        if (!modelSetter) return;
+
+        scope.$on('datatable:init', function () {
+          console.info('init length ', dt.api().page.len());
+          modelSetter(scope, modelGetter(scope) || dt.api().page.len());
+        });
+
+        scope.$watch(model, function (newVal, oldVal) {
+          if (newVal !== oldVal) {
+            console.info('length for ', newVal);
+            dt.api().page.len( newVal || 10 ).draw();
+          }
+        });
+      }
+    };
+  }
+];
+
+var DataTableInfoDirective = [
+  '$parse',
+  function ($parse) {
+    return {
+      restrict: 'AC',
+      require: '^'+DATATABLE_DIRECTIVE_NAME,
+      link: function(scope, element, attrs, ctrl) {
+        var dt = ctrl,
+
+            inGetter = $parse(attrs.in),
             inSetter = inGetter.assign;
 
         if (!inSetter) return;
 
         // define the page info for "in" attribute
-        inSetter();
+        scope.$on('datatable:draw', function () {
+          var info = dt.api().page.info();
 
-        scope.$watch(model, function (newVal, oldVal) {
-          console.info('searching for ', newVal);
-          dt.api().search( newVal || '' ).draw();
+          console.info('init info', info);
+          inSetter(scope, {
+            start:     info.start,
+            end:       info.end,
+            length:     info.length,
+            total:     info.recordsTotal,
+            displayed: info.recordsDisplay
+          });
         });
+
       }
     };
   }
@@ -368,6 +531,8 @@ angular.module('broda.datatable', [], [
     $compileProvider.directive(DATATABLE_DIRECTIVE_NAME+'Column', DataTableColumnDirective);
     $compileProvider.directive(DATATABLE_DIRECTIVE_NAME+'Search', DataTableSearchDirective);
     $compileProvider.directive(DATATABLE_DIRECTIVE_NAME+'Pagination', DataTablePaginationDirective);
+    $compileProvider.directive(DATATABLE_DIRECTIVE_NAME+'Length', DataTableLengthDirective);
+    $compileProvider.directive(DATATABLE_DIRECTIVE_NAME+'Info', DataTableInfoDirective);
   }
 ]);
 
