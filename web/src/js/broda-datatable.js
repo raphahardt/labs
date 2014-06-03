@@ -1,5 +1,34 @@
 (function($, window, angular, document, undefined) {
 
+// http://stackoverflow.com/a/17889439
+$.fn.attrs = function(attrs) {
+  var t = $(this);
+  if (attrs) {
+    // Set attributes
+    t.each(function(i, e) {
+      var j = $(e);
+      for (var attr in attrs) {
+        j.attr(attr, attrs[attr]);
+      }
+      ;
+    });
+    return t;
+  } else {
+    // Get attributes
+    var a = {},
+        r = t.get(0);
+    if (r) {
+      r = r.attributes;
+      for (var i in r) {
+        var p = r[i];
+        if (typeof p.nodeValue !== 'undefined')
+          a[p.nodeName] = p.nodeValue;
+      }
+    }
+    return a;
+  }
+};
+
 var DATATABLE_DIRECTIVE_NAME = 'datatable',
     noop = function () {return this};
 
@@ -35,7 +64,8 @@ function DataTableProvider() {
     // even if is not instancied yet
     retrieve: true,
 
-    ajax: 'ajax',
+    // specific options of dt directive
+    rowTag: '<tr>',
     ajaxMethod: 'POST'
   };
 
@@ -43,13 +73,6 @@ function DataTableProvider() {
     '$compile', '$http',
     function($compile, $http) {
 
-      /**
-       * Escapes the {{ }} interpolate symbols of values of datatables for
-       * possibilly security issues.
-       *
-       * @param {String} text
-       * @returns {String}
-       */
       function escapeInterpolation(text) {
         text = "" + text; // forces a string
         if (angular.version.major >= 1 && angular.version.minor >= 3 || angular.version.major >= 2) {
@@ -62,6 +85,13 @@ function DataTableProvider() {
       }
 
       return {
+        /**
+         * Escapes the {{ }} symbols of values of datatables for solve
+         * possibilly security issues.
+         *
+         * @param {String} text
+         * @returns {String}
+         */
         escapeInterpolation: function (text) {
           return escapeInterpolation(text);
         },
@@ -102,25 +132,26 @@ function DataTableProvider() {
           // rows are created as needed
           optsCopy.deferRender = true;
 
+          // for increase performance
+          optsCopy.autoWidth = false;
+
           var method = optsCopy.ajaxMethod;
-          delete optsCopy.ajaxMethod;
           // triggered when data is get from server
           var ajaxUrl = optsCopy.ajax;
           optsCopy.ajax = function(sendData, cb, opts) {
             $http({ method: method, url: ajaxUrl, data: sendData })
             .success(function(data) {
-              console.warn('ajax done');
               cb(data);
             })
             .error(function(data, status, headers, config) {
-              alert('erro!');
+              $scope.$emit('datatable:error', data, status, headers, config);
             });
           };
 
           // triggered when row is created (some columns could be hidden, so
           // compile is not safe here)
           optsCopy.createdRow = function(row, data, index) {
-            var rowScope = $scope.$new(true),
+            var rowScope = $scope.$new(),
                 $row = angular.element(row);
 
             for(var key in data) {
@@ -131,10 +162,11 @@ function DataTableProvider() {
             rowScope.$odd = (index % 2 !== 0);
             rowScope.$row = angular.copy(data); // for access to all row data
 
-            console.warn('createdRow');
+            // replace the <tr> for the custom tag
+            $row.attrs(angular.element(optsCopy.rowTag).attrs());
 
+            // store scope for the next event
             $row.data('scope', rowScope);
-
           };
 
           // triggered when row is rendered (safe to compile)
@@ -142,14 +174,15 @@ function DataTableProvider() {
             var $row = angular.element(row),
                 rowScope = $row.data('scope');
 
-            $row.replaceWith($compile($row)(rowScope));
+            if (!$row.data('compiled')) {
+              // compiles once
+              $row.replaceWith($compile($row)(rowScope));
+              $row.data('compiled', true);
+            }
             rowScope.$evalAsync(); // schedule a digest if one is not already in progress
-
-            console.warn('rowCallback', row);
           };
 
           optsCopy.drawCallback = function() {
-            console.warn('drawCallback');
             $scope.$broadcast('datatable:draw');
           };
 
@@ -222,6 +255,7 @@ var DataTableController = [
 
       col.data = name;
       col.visible = true;
+      col.orderable = true;
       if (template) {
         col.render = function(data, type) {
           if (type === 'display')
@@ -264,12 +298,21 @@ var DataTableController = [
       });
 
       colAttrs.$observe('visible', function (val) {
-        console.log('visible', colIndex, val);
-        controller.api().column( colIndex ).visible( $datatable.toBoolean(val) ).draw(false);
-        // must redraw :(
-        // there is a bug if draw is not called: if table is initialized with columns invisible,
-        // the cells are not compiled by angular, so a refresh is need
-        // is lame, but is the only way
+        if (angular.isDefined(val)) {
+          console.log('visible', colIndex, val);
+          controller.api().column( colIndex ).visible( $datatable.toBoolean(val) ).draw(false);
+          // must redraw :(
+          // there is a bug if draw is not called: if table is initialized with columns invisible,
+          // the cells are not compiled by angular, so a refresh is need
+          // is lame, but is the only way
+        }
+      });
+
+      colAttrs.$observe('orderable', function (val) {
+        if (angular.isDefined(val) && col.orderable !== val) {
+          col.orderable = $datatable.toBoolean(val);
+          needToReinitialize = true;
+        }
       });
 
     };
@@ -329,7 +372,7 @@ var DataTableDirective = [
   function ($compile) {
     return {
       restrict: 'AC',
-      //scope: true,
+      scope: true,
       controller: DataTableController
     };
   }
@@ -341,8 +384,8 @@ var DataTableColumnDirective = [
       restrict: 'AC',
       require: '^'+DATATABLE_DIRECTIVE_NAME,
       controller: [
-        '$scope', '$element', '$attrs',
-        function(scope, element, attrs) {
+        '$scope', '$element',
+        function(scope, element) {
           this.index = element.index();
         }
       ],
@@ -357,8 +400,7 @@ var DataTableColumnDirective = [
 ];
 
 var DataTableSearchDirective = [
-  '$parse',
-  function ($parse) {
+  function () {
     return {
       restrict: 'AC',
       require: [
@@ -369,21 +411,7 @@ var DataTableSearchDirective = [
       link: function(scope, element, attrs, ctrls) {
         var dt = ctrls[0],
             forCol = ctrls[1] ? ctrls[1].index : (attrs[DATATABLE_DIRECTIVE_NAME+'Search'] || null),
-            model = ctrls[2] ? attrs.ngModel : attrs.watch,
-
-            modelGetter = $parse(model),
-            modelSetter = modelGetter.assign;
-
-        scope.$on('datatable:init', function() {
-          dt.api().on('search', function() {
-            console.log('mudou search por outro lugar')
-            modelSetter(scope, dt.api().search());
-          });
-        });
-
-        scope.$on('$destroy', function() {
-          dt.api().off('search');
-        });
+            model = ctrls[2] ? attrs.ngModel : attrs.watch;
 
         scope.$watch(model, function (newVal, oldVal) {
           if (newVal !== oldVal) {

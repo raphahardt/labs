@@ -7,15 +7,38 @@
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
         <link rel="stylesheet" href="http://twitter.github.io/typeahead.js/css/examples.css">
         <link rel="stylesheet" href="//cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
+        <style>
+            .btn-animate.ng-move,
+            .btn-animate.ng-enter,
+            .btn-animate.ng-leave {
+                -webkit-transition:all ease 0.5s;
+                transition:all ease 0.5s;
+            }
+
+            .btn-animate.ng-leave.ng-leave-active,
+            .btn-animate.ng-move,
+            .btn-animate.ng-enter {
+                opacity:0;
+                -webkit-transform: scale(0.3);
+                transform: scale(0.3);
+            }
+
+            .btn-animate.ng-leave,
+            .btn-animate.ng-move.ng-move-active,
+            .btn-animate.ng-enter.ng-enter-active {
+                opacity:1;
+                -webkit-transform: scale(1);
+                transform: scale(1);
+            }
+        </style>
     </head>
     <body>
 
         <div ng-app="teste" ng-controller="TesteCtrl" style="padding: 50px;">
 
             <script id="teste/teste.html" type="text/ng-template">
-                <div>
-                    <strong>{{ name }} - {{ $index }}</strong>
-                </div>
+                {{ name }} - {{$index }}
+                <button class="btn btn-default" ng-click="del($row, $index)">Trash</button>
             </script>
 
             <div datatable="optionsDt" ng-init="col1 = 'name'; col2 = 'position'">
@@ -37,7 +60,7 @@
                 <div datatable-pagination in="pages" watch="dt_page">
                     Página:
                     <div>
-                        <span ng-repeat="page in pages track by page.index">
+                        <span ng-repeat="page in pages track by page.index" class="btn-animate">
                             <button type="button" ng-click="setPage(page.index)" class="btn btn-default" ng-class="{ active: page.active }">
                                 {{ page.number }}</button>
                         </span>
@@ -59,16 +82,18 @@
                     <thead>
                         <tr>
                             <th>Coluna 0</th>
-                            <th datatable-column name="{{col1}}"
-                                template="teste/teste.html"
-                                visible="{{col3v}}">Coluna 1
+                            <th datatable-column
+                                name="{{col1}}"
+                                visible="{{col3v}}">
+                                Coluna 1
                                 <input type="search" datatable-search ng-model="dt_busca_col" />
                             </th>
                             <th data-datatable-column name="{{col2}}"
                                 visible="true">Coluna 2</th>
-                            <th datatable-column="x" name="salary"
-                                visible="{{col3v}}">Coluna 3</th>
-                            <th>Coluna 4</th>
+                            <th datatable-column="x"
+                                name="salary"
+                                template="teste/teste.html"
+                                orderable="false">Coluna 3</th>
                         </tr>
                     </thead>
                 </table>
@@ -123,16 +148,22 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
 
             function $typeaheadObject () {}
 
-            angular.module('teste', ['broda.typeahead', 'broda.datatable'])
+            angular.module('teste', ['broda.typeahead', 'broda.datatable', 'ngAnimate'])
                 .controller('TesteCtrl', [
                         '$scope',
                         function ($scope) {
 
-                            $scope.optionsDt = {};
+                            $scope.optionsDt = {
+                                ajax: 'ajax'
+                            };
 
                             $scope.setPage = function(i) {
                                 $scope.dt_page = i;
                             };
+                            $scope.del = function(row) {
+                                alert('você pediu por '+row.salary);
+                                console.log(row);
+                            }
 
                             $scope.conteudo = {};
                             $scope.conteudo.title = 'aaa';
