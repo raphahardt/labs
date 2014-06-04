@@ -41,10 +41,12 @@
                 <button class="btn btn-default" ng-click="del($row, $index)">Trash</button>
             </script>
 
-            <div datatable="optionsDt" ng-init="col1 = 'name'; col2 = 'position'">
+            <div ng-show="dt_loading">carregando...</div>
+
+            <div datatable="optionsDt" processing-in="dt_loading" ng-init="col1 = 'name'; col2 = 'position'" class="ng-cloak">
 
                 <!--<p>Procurar: <input type="search" data-datatable-search data-for="'nomecoluna'" ng-model="dt_busca" /></p>-->
-                <p>Procurar: <input type="search" datatable-search ng-model="dt_busca" /></p>
+                <p>Procurar: <input type="search" datatable-search ng-model="dt_busca" ng-model-options="{ debounce: 600 }" /></p>
 
                 <p>Por página:
                     <input type="number" ng-model="dt_tamanho"/>
@@ -84,16 +86,17 @@
                             <th>Coluna 0</th>
                             <th datatable-column
                                 name="{{col1}}"
-                                visible="{{col3v}}">
+                                 orderable="false">
                                 Coluna 1
-                                <input type="search" datatable-search ng-model="dt_busca_col" />
+                                <input type="search" datatable-search ng-model="dt_busca_col" ng-model-options="{ debounce: 600 }" />
                             </th>
-                            <th data-datatable-column name="{{col2}}"
-                                visible="true">Coluna 2</th>
                             <th datatable-column="x"
                                 name="salary"
                                 template="teste/teste.html"
+                                visible="{{col3v}}"
                                 orderable="false">Coluna 3</th>
+                            <th data-datatable-column name="{{col2}}"
+                                visible="true">Coluna 2</th>
                         </tr>
                     </thead>
                 </table>
@@ -154,6 +157,7 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
                         function ($scope) {
 
                             $scope.optionsDt = {
+                                //serverSide: true,
                                 ajax: 'ajax'
                             };
 

@@ -1,5 +1,7 @@
 (function($, window, angular, document, undefined) {
 
+//'use strict';
+
 // http://stackoverflow.com/a/17889439
 $.fn.attrs = function(attrs) {
   var t = $(this);
@@ -70,18 +72,29 @@ function DataTableProvider() {
   };
 
   this.$get = [
-    '$compile', '$http',
-    function($compile, $http) {
+    '$compile', '$http', '$interpolate', '$log',
+    function($compile, $http, $interpolate, $log) {
 
       function escapeInterpolation(text) {
         text = "" + text; // forces a string
+
+        var interpolateSymbols = [
+          $interpolate.startSymbol(),
+          $interpolate.endSymbol()
+        ];
+
         if (angular.version.major >= 1 && angular.version.minor >= 3 || angular.version.major >= 2) {
           // angular 1.3>= has \{\{ syntax
-          return text.replace(/{{/g, '\\{\\{').replace(/}}/g, '\\}\\}');
+          for(var i in interpolateSymbols) {
+            text = text.replace(new RegExp('['+interpolateSymbols[i]+']', 'g'), '\\$&');
+          }
         } else {
           // angular 1.3< does not, so is better strip off this values
-          return text.replace(/[{}]/g, '');
+          for(var i in interpolateSymbols) {
+            text = text.replace(new RegExp(interpolateSymbols[i], 'g'), '');
+          }
         }
+        return text;
       }
 
       return {
@@ -109,6 +122,7 @@ function DataTableProvider() {
               return true;
             case (value === 'false'):
             case (value === 'F'):
+            case (value === '0'):
               return false;
             default:
               return !!value;
@@ -167,6 +181,8 @@ function DataTableProvider() {
 
             // store scope for the next event
             $row.data('scope', rowScope);
+
+            $log.info('row '+index+' created');
           };
 
           // triggered when row is rendered (safe to compile)
@@ -174,16 +190,27 @@ function DataTableProvider() {
             var $row = angular.element(row),
                 rowScope = $row.data('scope');
 
-            if (!$row.data('compiled')) {
-              // compiles once
+            if ($row.data('compiled') !== true) {
+              // compiles once the row
               $row.replaceWith($compile($row)(rowScope));
               $row.data('compiled', true);
+              $row.children().data('compiled', true);
+
+              $log.info('row '+rowScope.$index+' compiled');
+            } else {
+              // if already compiled, compiles only what not have compiled yet
+              $row.children().each(function() {
+                var $td = $(this);
+                // compiles only td's not compiled
+                if ($td.data('compiled') !== true) {
+                  $td.replaceWith($compile($td)(rowScope));
+                  $td.data('compiled', true);
+
+                  $log.info('compiled only td '+$td.index()+' from row '+rowScope.$index+' ');
+                }
+              });
             }
             rowScope.$evalAsync(); // schedule a digest if one is not already in progress
-          };
-
-          optsCopy.drawCallback = function() {
-            $scope.$broadcast('datatable:draw');
           };
 
           return optsCopy;
@@ -195,13 +222,15 @@ function DataTableProvider() {
 }
 
 var DataTableController = [
-  '$scope', '$element', '$attrs', '$templateCache', '$datatable', '$parse', '$timeout',
-  function ($scope, $element, $attrs, $templateCache, $datatable, $parse, $timeout) {
+  '$scope', '$element', '$attrs', '$templateCache', '$datatable', '$parse', '$log',
+  function ($scope, $element, $attrs, $templateCache, $datatable, $parse, $log) {
 
     var controller = this,
         // parse the options of directive
         settingsGet = $parse($attrs[DATATABLE_DIRECTIVE_NAME]),
         scopeSettings = settingsGet($scope),
+
+        processingSetter = $attrs.processingIn ? $parse($attrs.processingIn).assign : false,
 
         // table element
         // only the first table of directive will be handled
@@ -216,8 +245,9 @@ var DataTableController = [
     // privates
     function destroyApi() {
       if (_api !== null) {
+        _api.off('.dt');
         _api.destroy();
-        console.info('datatables detroyed');
+        $log.info('datatable detroyed');
       }
       _api = null;
     };
@@ -226,10 +256,31 @@ var DataTableController = [
       if (_api === null) {
         var settings = $datatable.makeSettings($scope, scopeSettings, controller.options);
         _api = table.DataTable(settings);
+        _api.on('init.dt', function() {
+          _api.draw();
+        });
+        _api.on('draw.dt', function() {
+          $scope.$broadcast('datatable:draw');
+        });
+        _api.on('processing.dt', function(event,opt,processing) {
+          if (processingSetter) {
+            console.info('processing in', processing);
+            processingSetter($scope, processing);
+          }
+          $scope.$broadcast('datatable:processing', processing);
+        });
+        // method to recompile rows if visible of a column is changed
+        // hack for avoid a draw() after a col vis toggle
+        // ..is a hack, but still better than a full redraw
+        _api._refreshVisible = function() {
+          var rows = _api.rows().nodes().toArray();
+          for (var i=0; i<rows.length; i++) {
+            // redraw each known row
+            settings.rowCallback(rows[i]);
+          }
+        };
 
-        $scope.$broadcast('datatable:init');
-
-        console.info('datatables initialized', _api);
+        $log.info('datatable initialized', _api);
       }
     }
     // end privates
@@ -254,8 +305,8 @@ var DataTableController = [
       columnsLeft--;
 
       col.data = name;
-      col.visible = true;
-      col.orderable = true;
+      col.visible = angular.isDefined(colAttrs.visible) ? $datatable.toBoolean(colAttrs.visible) : true;
+      col.orderable = angular.isDefined(colAttrs.orderable) ? $datatable.toBoolean(colAttrs.orderable) : true;
       if (template) {
         col.render = function(data, type) {
           if (type === 'display')
@@ -298,9 +349,26 @@ var DataTableController = [
       });
 
       colAttrs.$observe('visible', function (val) {
-        if (angular.isDefined(val)) {
-          console.log('visible', colIndex, val);
-          controller.api().column( colIndex ).visible( $datatable.toBoolean(val) ).draw(false);
+        var v = $datatable.toBoolean(val);
+        if (angular.isDefined(val) && col.visible !== v) {
+          console.log('visible', colIndex, v);
+          col.visible = v; // change the setting for next possibl reinit and for comparising
+          controller.api().column( colIndex ).visible( v );//.draw(false);
+          if (v) { // only refresh if a column is now visible (the inverse is unecessary)
+            controller.api()._refreshVisible();
+          }
+
+          /*if (v) {
+            var rows = controller.api().rows().nodes().toArray();
+            for (var i=0; i<rows.length; i++) {
+              var rowScope = angular.element(rows[i]).data('scope');
+              if (rowScope) {
+                window.setTimeout(function() {
+                  rowScope.$apply();
+                },0);
+              }
+            }
+          }*/
           // must redraw :(
           // there is a bug if draw is not called: if table is initialized with columns invisible,
           // the cells are not compiled by angular, so a refresh is need
@@ -309,8 +377,10 @@ var DataTableController = [
       });
 
       colAttrs.$observe('orderable', function (val) {
-        if (angular.isDefined(val) && col.orderable !== val) {
-          col.orderable = $datatable.toBoolean(val);
+        var v = $datatable.toBoolean(val);
+        if (angular.isDefined(val) && col.orderable !== v) {
+          console.log('changed orderable', v);
+          col.orderable = v;
           needToReinitialize = true;
         }
       });
@@ -336,7 +406,7 @@ var DataTableController = [
         return _api;
       }
       // use fake api for nor raise errors in sub datatable directives
-      console.warn('using fake api!');
+      $log.warn('using fake api!');
       return new fakeDtApi();
     };
 
@@ -362,6 +432,11 @@ var DataTableController = [
 
     $element.on('$destroy', function () {
       destroyApi();
+    });
+
+    $(document).on('ready', function() {
+      initApi();
+      $scope.$broadcast('datatable:init');
     });
 
   }
@@ -466,8 +541,8 @@ var DataTablePaginationDirective = [
         });
 
         scope.$watch(model, function (newVal, oldVal) {
-          console.info('pagination for ', newVal);
           if (newVal !== oldVal) {
+            console.info('pagination for ', newVal);
             dt.api().page( newVal || 0 ).draw(false); // false to not reset dt (see http://datatables.net/reference/api/page() )
 
             for(var i=0; i<pages; i++) {
