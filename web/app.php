@@ -211,6 +211,11 @@ $app->post('/ajax', function (Request $request) use ($app) {
         $data = array_slice($data, (int)$request->request->get('start'), (int)$request->request->get('length'));
     }
 
+    foreach ($data as &$r) {
+        $r->DT_RowId = $r->name;
+    }
+    unset($r);
+
     return new \Symfony\Component\HttpFoundation\JsonResponse(array(
         'draw' => (int)$request->request->get('draw'),
         'recordsTotal' => $total,

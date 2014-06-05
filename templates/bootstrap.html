@@ -30,6 +30,10 @@
                 -webkit-transform: scale(1);
                 transform: scale(1);
             }
+
+            .selected td {
+                background: #eee;
+            }
         </style>
     </head>
     <body>
@@ -42,6 +46,8 @@
             </script>
 
             <div ng-show="dt_loading">carregando...</div>
+
+            <pre>{{ selecteds.collection }}</pre>
 
             <div datatable="optionsDt" processing-in="dt_loading" ng-init="col1 = 'name'; col2 = 'position'" class="ng-cloak">
 
@@ -93,10 +99,10 @@
                             <th datatable-column="x"
                                 name="salary"
                                 template="teste/teste.html"
-                                visible="{{col3v}}"
+                                visible="true"
                                 orderable="false">Coluna 3</th>
                             <th data-datatable-column name="{{col2}}"
-                                visible="true">Coluna 2</th>
+                                orderable="{{col3v}}">Coluna 2</th>
                         </tr>
                     </thead>
                 </table>
@@ -147,20 +153,28 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
         <script src="src/js/broda-awaydetector.js"></script>
         <script src="src/js/broda-typeahead.js"></script>
         <script src="src/js/broda-datatable.js"></script>
+        <script src="src/js/broda-stepper.js"></script>
+        <!--<script src="src/js/broda-money.js"></script>-->
         <script>
 
             function $typeaheadObject () {}
 
-            angular.module('teste', ['broda.typeahead', 'broda.datatable', 'ngAnimate'])
+            angular.module('teste', [/*'broda.typeahead', 'broda.datatable',*/ 'broda.stepper', 'ngAnimate'])
                 .controller('TesteCtrl', [
                         '$scope',
                         function ($scope) {
 
+                            $scope.selecteds = {
+                                collection: []
+                            };
+
                             $scope.optionsDt = {
-                                //serverSide: true,
+                                rowTag: '<tr row-selectable in="selecteds.collection">',
+                                serverSide: true,
                                 ajax: 'ajax'
                             };
 
+                            $scope.dt_page = 0;
                             $scope.setPage = function(i) {
                                 $scope.dt_page = i;
                             };

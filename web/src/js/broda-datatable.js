@@ -265,7 +265,7 @@ var DataTableController = [
         _api.on('processing.dt', function(event,opt,processing) {
           if (processingSetter) {
             console.info('processing in', processing);
-            processingSetter($scope, processing);
+            processingSetter($scope.$parent, processing);
           }
           $scope.$broadcast('datatable:processing', processing);
         });
@@ -394,7 +394,7 @@ var DataTableController = [
      *
      * @returns {fakeDtApi|DataTable.API}
      */
-    this.api = function () {
+    this.api = function() {
       if (needToReinitialize) {
         destroyApi();
         needToReinitialize = false;
@@ -515,9 +515,13 @@ var DataTablePaginationDirective = [
       link: function(scope, element, attrs, ctrls) {
         var dt = ctrls[0],
             model = ctrls[1] ? attrs.ngModel : attrs.watch,
+            dtScope = scope.$parent,
 
             inGetter = $parse(attrs.in),
             inSetter = inGetter.assign,
+
+            modelGetter = $parse(model),
+            modelSetter = modelGetter.assign,
 
             pages = [];
 
@@ -531,16 +535,21 @@ var DataTablePaginationDirective = [
           for(var i=0; i<info.pages; i++) {
             pages.push({
               index: i,
-              active: i == info.page,
-              number: i + 1 // convenience
+              active: i === info.page, // convenience
+              number: i+1 // convenience
             });
           }
 
           console.info('init pagination', pages, info);
-          inSetter(scope, pages);
+          inSetter(dtScope, pages);
+          if (modelGetter(dtScope) != info.page) {
+            modelSetter(dtScope, info.page);
+          }
         });
 
         scope.$watch(model, function (newVal, oldVal) {
+          newVal = parseInt(newVal,10);
+          oldVal = parseInt(oldVal,10);
           if (newVal !== oldVal) {
             console.info('pagination for ', newVal);
             dt.api().page( newVal || 0 ).draw(false); // false to not reset dt (see http://datatables.net/reference/api/page() )
@@ -548,7 +557,7 @@ var DataTablePaginationDirective = [
             for(var i=0; i<pages; i++) {
               pages[i].active = (i == newVal);
             }
-            inSetter(scope, pages);
+            inSetter(dtScope, pages);
           }
         });
       }
@@ -568,6 +577,7 @@ var DataTableLengthDirective = [
       link: function(scope, element, attrs, ctrls) {
         var dt = ctrls[0],
             model = ctrls[1] ? attrs.ngModel : attrs.watch,
+            dtScope = scope.$parent,
 
             modelGetter = $parse(model),
             modelSetter = modelGetter.assign;
@@ -576,7 +586,7 @@ var DataTableLengthDirective = [
 
         scope.$on('datatable:init', function () {
           console.info('init length ', dt.api().page.len());
-          modelSetter(scope, modelGetter(scope) || dt.api().page.len());
+          modelSetter(dtScope, modelGetter(dtScope) || dt.api().page.len());
         });
 
         scope.$watch(model, function (newVal, oldVal) {
@@ -598,6 +608,7 @@ var DataTableInfoDirective = [
       require: '^'+DATATABLE_DIRECTIVE_NAME,
       link: function(scope, element, attrs, ctrl) {
         var dt = ctrl,
+            dtScope = scope.$parent,
 
             inGetter = $parse(attrs.in),
             inSetter = inGetter.assign;
@@ -609,13 +620,93 @@ var DataTableInfoDirective = [
           var info = dt.api().page.info();
 
           console.info('init info', info);
-          inSetter(scope, {
+          inSetter(dtScope, {
             start:     info.start,
             end:       info.end,
-            length:     info.length,
+            length:    info.length,
             total:     info.recordsTotal,
             displayed: info.recordsDisplay
           });
+        });
+
+      }
+    };
+  }
+];
+
+var DataTableRowSelectableDirective = [
+  '$parse', '$cacheFactory',
+  function ($parse, $cacheFactory) {
+
+    function SelectedRows(collection) {
+      this.collection = collection || [];
+    }
+    SelectedRows.prototype = {
+      constructor: SelectedRows,
+
+      put: function(id) {
+        if (this.get(id) === false) {
+          this.collection.push(id);
+        }
+        return this;
+      },
+      get: function(id) {
+        for(var i=0;i<this.collection.length;i++) {
+          if (this.collection[i] === id) {
+            return i;
+          }
+        }
+        return false;
+      },
+      remove: function(id) {
+        var i=this.get(id);
+        if (i !== false) {
+          this.collection.splice(i, 1);
+        }
+        return this;
+      },
+      flat: function() {
+        return this.collection;
+      },
+      set: function(collection) {
+        this.collection = collection;
+        return this;
+      }
+    };
+
+    return {
+      restrict: 'AC',
+      link: function(scope, element, attrs) {
+        var inGetter = $parse(attrs.in),
+            inSetter = inGetter.assign,
+
+            $id = element.data('id') || element.attr('id') || element.html(),
+            selected = new SelectedRows(inGetter(scope));
+
+        if (!inSetter) return;
+
+        inSetter(scope, selected.flat());
+
+        if (selected.get($id) !== false) {
+          element.addClass('selected');
+        }
+
+        element.on('click.dtselectable', function(e) {
+          if (e.isDefaultPrevented()) {
+            return false;
+          }
+          if (selected.get($id) !== false) {
+            element.removeClass('selected');
+            selected.remove($id);
+          } else {
+            element.addClass('selected');
+            selected.put($id);
+          }
+          scope.$apply();
+        });
+
+        scope.$on('$destroy', function() {
+          element.off('.dtselectable');
         });
 
       }
@@ -636,6 +727,7 @@ angular.module('broda.datatable', [], [
     $compileProvider.directive(DATATABLE_DIRECTIVE_NAME+'Pagination', DataTablePaginationDirective);
     $compileProvider.directive(DATATABLE_DIRECTIVE_NAME+'Length', DataTableLengthDirective);
     $compileProvider.directive(DATATABLE_DIRECTIVE_NAME+'Info', DataTableInfoDirective);
+    $compileProvider.directive('rowSelectable', DataTableRowSelectableDirective);
   }
 ]);
 
