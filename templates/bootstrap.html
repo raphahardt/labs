@@ -45,6 +45,11 @@
                 <button class="btn btn-default" ng-click="del($row, $index)">Trash</button>
             </script>
 
+            <input type="text" money ng-model="dinheiro" />
+            <input type="text" ng-model="dinheiro" />
+            <button type="button" ng-click="dinheiro = 345.212">setar para 345.212</button>
+            <pre>Dinheiro: {{ dinheiro }}</pre>
+
             <div ng-show="dt_loading">carregando...</div>
 
             <pre>{{ selecteds.collection }}</pre>
@@ -154,12 +159,12 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
         <script src="src/js/broda-typeahead.js"></script>
         <script src="src/js/broda-datatable.js"></script>
         <script src="src/js/broda-stepper.js"></script>
-        <!--<script src="src/js/broda-money.js"></script>-->
+        <script src="src/js/broda-money.js"></script>
         <script>
 
             function $typeaheadObject () {}
 
-            angular.module('teste', [/*'broda.typeahead', 'broda.datatable',*/ 'broda.stepper', 'ngAnimate'])
+            angular.module('teste', [/*'broda.typeahead', 'broda.datatable',*/ 'broda.money', 'ngAnimate'])
                 .controller('TesteCtrl', [
                         '$scope',
                         function ($scope) {
