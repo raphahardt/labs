@@ -38,19 +38,37 @@ class Uploader
         $this->path = $path;
     }
 
-    public function upload(UploadedFile $uploadedFile)
+    private function getContentRange()
     {
-        // pega o range-content (Content-Range: bytes 0-123/400)
-        $range = $this->request->server->get('HTTP_CONTENT_RANGE', null);
-        list(/* ignore */, $rangeFrom, $rangeTo, $rangeTotal) =
-                preg_split('/[^0-9]+/', $range);
+        $range = $this->request->server->get('HTTP_CONTENT_RANGE', '');
+        list(/* ignore */, $rangeFrom, $rangeTo, $rangeTotal) = preg_split('/[^0-9]+/', $range);
 
-        // pega o nome do arquivo (pode estar no Content-Disposition: attachment; filename="x")
+        return array(
+            'from' => (int)$rangeFrom,
+            'to' => (int)$rangeTo,
+            'total' => (int)$rangeTotal ?: (int)$this->request->server->get('CONTENT_LENGTH')
+        );
+    }
+
+    private function getContentDispositionFilename($defaultFilename = '')
+    {
         $name = $this->request->server->get('HTTP_CONTENT_DISPOSITION',
-                '"' . $uploadedFile->getClientOriginalName() . '"');
+                '"' . $defaultFilename . '"');
         $originalName = substr($name,
                 strpos($name, '"') + 1,
                 strrpos($name, '"') - strpos($name, '"') - 1);
+
+        return $originalName;
+    }
+
+    public function upload(UploadedFile $uploadedFile)
+    {
+        // pega o range-content (Content-Range: bytes 0-123/400)
+        $range = $this->getContentRange();
+        $rangeTotal = $range['total'];
+
+        // pega o nome do arquivo (pode estar no Content-Disposition: attachment; filename="x")
+        $originalName = $this->getContentDispositionFilename($uploadedFile->getClientOriginalName());
 
         if ($uploadedFile->getSize() < (int)$rangeTotal) {
             // chunk

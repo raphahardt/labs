@@ -3,7 +3,6 @@
 namespace Reacao\Controller;
 
 use Broda\File\Uploader;
-use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMException;
 use Imagine\Image\Box;
@@ -33,12 +32,6 @@ class PublishController
 
     /**
      *
-     * @var Connection
-     */
-    protected $db;
-
-    /**
-     *
      * @var EntityManagerInterface
      */
     protected $em;
@@ -61,11 +54,10 @@ class PublishController
      */
     protected $validator;
 
-    public function __construct(Connection $db, Request $request, $path,
+    public function __construct(Request $request, $path,
             ImagineInterface $imagine, EntityManagerInterface $em)
     {
         //sleep(mt_rand(2, 5));
-        $this->db = $db;
         $this->path = $path; // TODO: trocar o caminho por um objeto "usuário" que contem as configurações nele (tipo getFolder()..)
         $this->basePath = $request->getSchemeAndHttpHost() . $request->getBasePath() . '/';
         $this->imagine = $imagine;

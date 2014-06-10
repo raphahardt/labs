@@ -134,6 +134,15 @@ $app['reacao.controller.publish'] = function () use ($app) {
     return new PublishController($app['db'], $app['request'], $app['path.public'], $app['imagine'], $app['orm.em']);
 };
 
+$app['reacao.controller.testrest'] = function () use ($app) {
+    return new Reacao\Controller\TestRestfulController();
+};
+
+$app->get('/rest.{_format}', 'reacao.controller.testrest:get');
+$app->put('/rest.{_format}', 'reacao.controller.testrest:put');
+$app->post('/rest.{_format}', 'reacao.controller.testrest:post');
+$app->delete('/rest.{_format}', 'reacao.controller.testrest:delete');
+
 /*$app->get('/', function () use ($app) {
     return $app['twig']->render('upload.twig');
 });*/

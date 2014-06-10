@@ -37,7 +37,7 @@ function $typeaheadProvider() {
   var enginePromise;
 
   this.$get = [
-    '$rootScope', '$compile', '$timeout',
+    '$rootScope', '$compile',
     function($rootScope, $compile) {
 
       // privates
