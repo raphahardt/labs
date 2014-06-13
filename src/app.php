@@ -5,6 +5,7 @@ use Broda\File\Unpacker;
 use Broda\File\Uploader;
 use Broda\Provider\AsseticServiceProvider;
 use Broda\Provider\ImagineServiceProvider;
+use Broda\Provider\RestServiceProvider;
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
@@ -39,6 +40,8 @@ $app->register(new DoctrineOrmServiceProvider());
 $app->register(new SecurityServiceProvider());
 
 $app->register(new AsseticServiceProvider());
+
+$app->register(new RestServiceProvider());
 
 $app['file.uploader'] = $app->share(function () use ($app) {
     return new Uploader($app['request'], $app['file.upload.base_path']);

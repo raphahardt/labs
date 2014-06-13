@@ -45,6 +45,26 @@
                 <button class="btn btn-default" ng-click="del($row, $index)">Trash</button>
             </script>
 
+            <!--<input type="text" ng-model="numero">{{invert(numero)}}
+
+            <form ng-submit="ins(form)">
+                <div>
+                    <p>username: <input type="text" ng-model="form.username" /></p>
+                    <p>enabled: <input type="checkbox" ng-model="form.ativo" /></p>
+                    <p><input type="submit" value="inserir" /></p>
+                </div>
+            </form>
+            <div ng-repeat="user in users">
+                <div>
+                    <p>username: <input type="text" ng-model="user.username" /></p>
+                    <p>enabled: <input type="checkbox" ng-model="user.ativo" /></p>
+                    <p>
+                        <button type="button" ng-click="save(user)">salvar</button>
+                        <button type="button" ng-click="dele(user)">deletar</button>
+                    </p>
+                </div>
+            </div>
+
             <input type="text" money ng-model="dinheiro" />
             <input type="text" ng-model="dinheiro" />
             <button type="button" ng-click="dinheiro = 345.212">setar para 345.212</button>
@@ -56,7 +76,7 @@
 
             <div datatable="optionsDt" processing-in="dt_loading" ng-init="col1 = 'name'; col2 = 'position'" class="ng-cloak">
 
-                <!--<p>Procurar: <input type="search" data-datatable-search data-for="'nomecoluna'" ng-model="dt_busca" /></p>-->
+                <!--<p>Procurar: <input type="search" data-datatable-search data-for="'nomecoluna'" ng-model="dt_busca" /></p>-- >
                 <p>Procurar: <input type="search" datatable-search ng-model="dt_busca" ng-model-options="{ debounce: 600 }" /></p>
 
                 <p>Por página:
@@ -116,14 +136,20 @@
 
             <pre>
 Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
-            </pre>
+            </pre>-->
 
             <button class="btn btn-default" data-tooltip="conteudo" data-placement="right">teste</button>
 
             <input type="text" ng-model="conteudo.title"/>
 
             <span ng-show="carregando">Carregando...</span>
+            <button type="button" ng-click="teste = ''">setar para vazio</button>
+            <button type="button" ng-click="teste = 'aaabbb'">setar para aaabbb</button>
+            <button type="button" ng-click="teste = { num: 'three' }">setar para { num: three }</button>
+            <button type="button" ng-click="teste = { letter: 'bee', other: false }">setar para { letter }</button>
+            <button type="button" ng-click="teste = { nonexists: 'aaa' }">setar para { nonexists }</button>
             <input type="text" data-typeahead="options" data-model="teste" />
+
 
             <p>Hint? <input type="checkbox" ng-model="options.options.hint"/></p>
             <p>highlight? <input type="checkbox" ng-model="options.options.highlight"/></p>
@@ -137,9 +163,9 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
             </div>
 
             <pre>
-{{ options | json }}
-
 {{ teste |json }}
+
+{{ options | json }}
 
 {{ status }}</pre>
 
@@ -155,6 +181,7 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
         <script src="//cdn.datatables.net/1.10.0/js/jquery.dataTables.js"></script>
         <script src="http://code.angularjs.org/1.3.0-beta.10/angular.js"></script>
         <script src="http://code.angularjs.org/1.3.0-beta.10/angular-animate.min.js"></script>
+        <script src="http://code.angularjs.org/1.3.0-beta.10/angular-resource.min.js"></script>
         <script src="src/js/broda-awaydetector.js"></script>
         <script src="src/js/broda-typeahead.js"></script>
         <script src="src/js/broda-datatable.js"></script>
@@ -164,10 +191,45 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
 
             function $typeaheadObject () {}
 
-            angular.module('teste', [/*'broda.typeahead', 'broda.datatable',*/ 'broda.money', 'ngAnimate'])
+            angular.module('teste', ['broda.typeahead', 'broda.datatable', 'broda.money', 'ngAnimate', 'ngResource'])
                 .controller('TesteCtrl', [
-                        '$scope',
-                        function ($scope) {
+                        '$scope', '$resource',
+                        function ($scope, $resource) {
+
+                            var users = $resource('rest/:id', {id: '@id'}, {
+                                update: {method: 'PUT'}
+                            });
+
+                            $scope.invert = function (num) {
+                                var num2 = 0, a;
+                                num = parseInt(num || 0, 10);
+
+                                while (num) {
+                                    a = num % 10;
+                                    num = Math.floor(num / 10);
+                                    num2 *= 10;
+                                    num2 += a;
+                                }
+                                return num2;
+                            }
+
+                            $scope.form = {};
+                            $scope.users = users.query();
+
+                            $scope.ins = function(data) {
+                                users.save(data, function(n) {
+                                    $scope.users.push(n);
+                                });
+                            };
+                            $scope.save = function(data) {
+                                data.$update();
+                            };
+                            $scope.dele = function(data) {
+                                data.$remove(function(n) {
+                                    var i = $scope.users.indexOf(n);
+                                    $scope.users.splice(i, 1);
+                                });
+                            };
 
                             $scope.selecteds = {
                                 collection: []

@@ -17,6 +17,7 @@ class Uploader
     const COMPLETE = 2;
 
     /**
+     * Arquivo completo
      *
      * @var File
      */
@@ -36,29 +37,6 @@ class Uploader
     {
         $this->request = $request;
         $this->path = $path;
-    }
-
-    private function getContentRange()
-    {
-        $range = $this->request->server->get('HTTP_CONTENT_RANGE', '');
-        list(/* ignore */, $rangeFrom, $rangeTo, $rangeTotal) = preg_split('/[^0-9]+/', $range);
-
-        return array(
-            'from' => (int)$rangeFrom,
-            'to' => (int)$rangeTo,
-            'total' => (int)$rangeTotal ?: (int)$this->request->server->get('CONTENT_LENGTH')
-        );
-    }
-
-    private function getContentDispositionFilename($defaultFilename = '')
-    {
-        $name = $this->request->server->get('HTTP_CONTENT_DISPOSITION',
-                '"' . $defaultFilename . '"');
-        $originalName = substr($name,
-                strpos($name, '"') + 1,
-                strrpos($name, '"') - strpos($name, '"') - 1);
-
-        return $originalName;
     }
 
     public function upload(UploadedFile $uploadedFile)
@@ -97,6 +75,29 @@ class Uploader
     public function getCompleteFile()
     {
         return $this->completeFile;
+    }
+
+    private function getContentRange()
+    {
+        $range = $this->request->server->get('HTTP_CONTENT_RANGE', '');
+        list(/* ignore */, $rangeFrom, $rangeTo, $rangeTotal) = preg_split('/[^0-9]+/', $range);
+
+        return array(
+            'from' => (int)$rangeFrom,
+            'to' => (int)$rangeTo,
+            'total' => (int)$rangeTotal ?: (int)$this->request->server->get('CONTENT_LENGTH')
+        );
+    }
+
+    private function getContentDispositionFilename($defaultFilename = '')
+    {
+        $name = $this->request->server->get('HTTP_CONTENT_DISPOSITION',
+                '"' . $defaultFilename . '"');
+        $originalName = substr($name,
+                strpos($name, '"') + 1,
+                strrpos($name, '"') - strpos($name, '"') - 1);
+
+        return $originalName;
     }
 
 }

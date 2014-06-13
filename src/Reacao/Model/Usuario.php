@@ -2,11 +2,13 @@
 
 namespace Reacao\Model;
 
+use Broda\Model\AbstractModel;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Reacao\Model\Role;
 use Reacao\Model\Usuario;
 use Reacao\Model\UsuarioRepository;
+use Serializable;
 use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -26,7 +28,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *     "admin"       = "\Reacao\Model\Usuario\Administrador"}
  * )
  */
-class Usuario implements AdvancedUserInterface, EquatableInterface, \Serializable
+class Usuario extends AbstractModel implements AdvancedUserInterface, EquatableInterface, Serializable
 {
 
     /**

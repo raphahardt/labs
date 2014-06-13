@@ -135,13 +135,15 @@ $app['reacao.controller.publish'] = function () use ($app) {
 };
 
 $app['reacao.controller.testrest'] = function () use ($app) {
-    return new Reacao\Controller\TestRestfulController();
+    return new Reacao\Controller\TestRestfulController($app['orm.em'], $app['security.encoder_factory']);
 };
 
-$app->get('/rest.{_format}', 'reacao.controller.testrest:get');
+$app['rest']->resource('/rest', 'reacao.controller.testrest')->convert('id', 'reacao.controller.testrest:converter');
+
+/*$app->get('/rest.{_format}', 'reacao.controller.testrest:get');
 $app->put('/rest.{_format}', 'reacao.controller.testrest:put');
 $app->post('/rest.{_format}', 'reacao.controller.testrest:post');
-$app->delete('/rest.{_format}', 'reacao.controller.testrest:delete');
+$app->delete('/rest.{_format}', 'reacao.controller.testrest:delete');*/
 
 /*$app->get('/', function () use ($app) {
     return $app['twig']->render('upload.twig');

@@ -8,12 +8,14 @@
 
 namespace Reacao\Model;
 
+use Broda\Model\AbstractModel;
+
 /**
  * Description of Serie
  *
  * @author raphael
  */
-class Serie
+class Serie extends AbstractModel
 {
     //put your code here
 }

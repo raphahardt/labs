@@ -236,7 +236,7 @@ class PublishController
     {
         $json = array();
         try {
-            $pags = $this->em->getRepository(get_class(new Pagina))->findAll();
+            $pags = $this->em->getRepository(Pagina::getClass())->findAll();
 
             foreach ($pags as $p) {
                 $json[] = $this->formatFile($p);
@@ -255,7 +255,7 @@ class PublishController
     {
         try {
             /* @var $pag Pagina */
-            $pag = $this->em->find(get_class(new Pagina), (int)$id);
+            $pag = $this->em->find(Pagina::getClass(), (int)$id);
 
             $pag->setDoublePage($request->request->get('double', false));
             $pag->setOrder($request->request->get('order', 0));

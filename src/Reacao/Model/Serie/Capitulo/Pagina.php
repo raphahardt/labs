@@ -8,6 +8,7 @@
 
 namespace Reacao\Model\Serie\Capitulo;
 
+use Broda\Model\AbstractModel;
 use Doctrine\ORM\Mapping as ORM;
 use Reacao\Model\Serie\Capitulo;
 use Symfony\Component\HttpFoundation\File\File;
@@ -21,7 +22,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @ORM\Entity
  * @ORM\EntityListeners({"Reacao\Listener\Model\Serie\Capitulo\PaginaListener"})
  */
-class Pagina
+class Pagina extends AbstractModel
 {
 
     /**

@@ -95,9 +95,8 @@ function $typeaheadProvider() {
       function listenAjaxEvents(sourceOpts) {
         if (!sourceOpts) return; // no prefetch/remote defined, ignore
 
-        if (!angular.isDefined(sourceOpts.ajax)) {
-          sourceOpts.ajax = {};
-        }
+        sourceOpts.ajax = sourceOpts.ajax || {};
+
         angular.forEach([
           'beforeSend',
           'success',
@@ -109,7 +108,7 @@ function $typeaheadProvider() {
             sourceOpts.ajax[funcName] = function() {
               console.info('TYPEAHEAD:AJAX:' + funcName + ' (override)');
               fn.apply(fn, arguments);
-              $rootScope.$apply();
+              $rootScope.$evalAsync();
             };
           } else {
             sourceOpts.ajax[funcName] = function() {
@@ -206,6 +205,33 @@ angular.module('broda.typeahead', [], [
                 init();
               }
             }, true);
+
+            scope.$watch(function(scp) {
+              return scp.model;
+            }, function(newVal, oldVal) {
+              if (newVal !== oldVal) {
+                if (angular.isObject(newVal)) {
+                  element.typeahead('val', '');
+                  // vai em cada dataset e procura um que o displayKey se encaixa com o obj
+                  for(var i = 0; i< settings.datasets.length; i++) {
+                    var displayKey = settings.datasets[i].displayKey || 'value',
+                        val = null;
+
+                    if (angular.isFunction(displayKey)) {
+                      val = displayKey(newVal);
+                    } else {
+                      val = newVal[displayKey];
+                    }
+                    if (val) {
+                      element.typeahead('val', val);
+                      break;
+                    }
+                  }
+                } else {
+                  element.typeahead('val', newVal);
+                }
+              }
+            });
 
             function updateModel(value) {
               scope.$apply(function() {
