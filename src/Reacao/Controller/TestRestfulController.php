@@ -41,15 +41,26 @@ class TestRestfulController
         $this->ef = $ef;
     }
 
-    public function converter($id)
+    public function converter($user, Request $request)
     {
-        return $this->em->getRepository(get_class(new Usuario))->find((int)$id);
+        $id = (int)$request->attributes->get('id');
+        return $this->em->getRepository(get_class(new Usuario))->find($id);
     }
 
-    public function delete(Request $request, Usuario $id = null)
+    public function formatter(Usuario $user)
     {
-        if (null === $id) return new HttpException(404, 'Usuario nao existe');
-        $i = $id->getId();
+        return array(
+            'id' => $user->getId(),
+            'username' => $user->getUsername(),
+            'email' => $user->getEmail(),
+            'ativo' => $user->isEnabled(),
+        );
+    }
+
+    public function delete(Request $request, Usuario $user = null)
+    {
+        if (null === $user) return new HttpException(404, 'Usuario nao existe');
+        $i = $user->getId();
 
         $a = array(
             $i => true
@@ -61,13 +72,8 @@ class TestRestfulController
     {
         $regs = array();
         $users = $this->em->getRepository(get_class(new Usuario))->findAll();
-        foreach ($users as $id) {
-            $regs[] = array(
-                'id' => $id->getId(),
-                'username' => $id->getUsername(),
-                'email' => $id->getEmail(),
-                'ativo' => $id->isEnabled(),
-            );
+        foreach ($users as $user) {
+            $regs[] = $this->formatter($user);
         }
 
         $a = $regs;
@@ -77,49 +83,34 @@ class TestRestfulController
     public function get(Usuario $id = null)
     {
         if (null === $id) return new HttpException(404, 'Usuario nao existe');
-        $a = array(
-            'id' => $id->getId(),
-            'username' => $id->getUsername(),
-            'email' => $id->getEmail(),
-            'ativo' => $id->isEnabled(),
-        );
+        $a = $this->formatter($id);;
         return new JsonResponse($a);
     }
 
     public function post(Request $request)
     {
-        $role = new Administrador();
+        $user = new Administrador();
 
-        $pass = $this->ef->getEncoder($role)->encodePassword('123', $role->getSalt());
-        $role->setPassword($pass);
-        $role->setUsername($request->request->get('username'));
-        $role->setEmail($request->request->get('username').'@admin.adm');
+        $pass = $this->ef->getEncoder($user)->encodePassword('123', $user->getSalt());
+        $user->setPassword($pass);
+        $user->setUsername($request->request->get('username'));
+        $user->setEmail($request->request->get('username').'@admin.adm');
 
-        $this->em->persist($role);
+        $this->em->persist($user);
         $this->em->flush();
 
-        $a = array(
-            'id' => $role->getId(),
-            'username' => $role->getUsername(),
-            'email' => $role->getEmail(),
-            'ativo' => $role->isEnabled(),
-        );
+        $a = $this->formatter($user);
         return new JsonResponse($a);
     }
 
-    public function put(Request $request, Usuario $id = null)
+    public function put(Request $request, Usuario $user = null)
     {
-        if (null === $id) return new HttpException(404, 'Usuario nao existe');
+        if (null === $user) return new HttpException(404, 'Usuario nao existe');
 
-        $id->setUsername(str_rot13($request->request->get('username')));
+        $user->setUsername(str_rot13($request->request->get('username')));
         $this->em->flush();
 
-        $a = array(
-            'id' => $id->getId(),
-            'username' => $id->getUsername(),
-            'email' => $id->getEmail(),
-            'ativo' => $id->isEnabled(),
-        );
+        $a = $this->formatter($user);
         return new JsonResponse($a);
     }
 

@@ -406,7 +406,7 @@ var DataTableController = [
         return _api;
       }
       // use fake api for nor raise errors in sub datatable directives
-      $log.warn('using fake api!');
+      $log.warn('using fake api! '+columnsLeft+' columns left to define');
       return new fakeDtApi();
     };
 
@@ -417,9 +417,9 @@ var DataTableController = [
     // check the number of columns
     table.find('thead tr > *').each(function () {
       var col = {};
-      if (angular.isDefined($(this).attr('datatable-column')) ||
-          angular.isDefined($(this).data('datatable-column')) ||
-          $(this).is('[datatable-column]')) {
+      if (angular.isDefined($(this).attr(''+DATATABLE_DIRECTIVE_NAME+'-column')) ||
+          angular.isDefined($(this).data(''+DATATABLE_DIRECTIVE_NAME+'-column')) ||
+          $(this).is('['+DATATABLE_DIRECTIVE_NAME+'-column]')) {
         columnsLeft++;
         controller.options.columns.push(col);
       } else {
@@ -635,44 +635,8 @@ var DataTableInfoDirective = [
 ];
 
 var DataTableRowSelectableDirective = [
-  '$parse', '$cacheFactory',
-  function ($parse, $cacheFactory) {
-
-    function SelectedRows(collection) {
-      this.collection = collection || [];
-    }
-    SelectedRows.prototype = {
-      constructor: SelectedRows,
-
-      put: function(id) {
-        if (this.get(id) === false) {
-          this.collection.push(id);
-        }
-        return this;
-      },
-      get: function(id) {
-        for(var i=0;i<this.collection.length;i++) {
-          if (this.collection[i] === id) {
-            return i;
-          }
-        }
-        return false;
-      },
-      remove: function(id) {
-        var i=this.get(id);
-        if (i !== false) {
-          this.collection.splice(i, 1);
-        }
-        return this;
-      },
-      flat: function() {
-        return this.collection;
-      },
-      set: function(collection) {
-        this.collection = collection;
-        return this;
-      }
-    };
+  '$parse', 'ArrayCache',
+  function ($parse, $cache) {
 
     return {
       restrict: 'AC',
@@ -681,7 +645,7 @@ var DataTableRowSelectableDirective = [
             inSetter = inGetter.assign,
 
             $id = element.data('id') || element.attr('id') || element.html(),
-            selected = new SelectedRows(inGetter(scope));
+            selected = $cache('selected-rows').setDefault(inGetter(scope));
 
         if (!inSetter) return;
 
@@ -714,7 +678,7 @@ var DataTableRowSelectableDirective = [
   }
 ];
 
-angular.module('broda.datatable', [], [
+angular.module('broda.datatable', ['broda.arraycache'], [
   '$provide', '$compileProvider',
   function($provide, $compileProvider) {
     // provider

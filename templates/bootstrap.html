@@ -45,7 +45,7 @@
                 <button class="btn btn-default" ng-click="del($row, $index)">Trash</button>
             </script>
 
-            <!--<input type="text" ng-model="numero">{{invert(numero)}}
+            <!- -<input type="text" ng-model="numero">{{invert(numero)}}
 
             <form ng-submit="ins(form)">
                 <div>
@@ -76,7 +76,7 @@
 
             <div datatable="optionsDt" processing-in="dt_loading" ng-init="col1 = 'name'; col2 = 'position'" class="ng-cloak">
 
-                <!--<p>Procurar: <input type="search" data-datatable-search data-for="'nomecoluna'" ng-model="dt_busca" /></p>-- >
+                <!--<p>Procurar: <input type="search" data-datatable-search data-for="'nomecoluna'" ng-model="dt_busca" /></p>-->
                 <p>Procurar: <input type="search" datatable-search ng-model="dt_busca" ng-model-options="{ debounce: 600 }" /></p>
 
                 <p>Por página:
@@ -136,7 +136,7 @@
 
             <pre>
 Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
-            </pre>-->
+            </pre>- ->
 
             <button class="btn btn-default" data-tooltip="conteudo" data-placement="right">teste</button>
 
@@ -182,6 +182,7 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
         <script src="http://code.angularjs.org/1.3.0-beta.10/angular.js"></script>
         <script src="http://code.angularjs.org/1.3.0-beta.10/angular-animate.min.js"></script>
         <script src="http://code.angularjs.org/1.3.0-beta.10/angular-resource.min.js"></script>
+        <script src="src/js/broda-arraycache.js"></script>
         <script src="src/js/broda-awaydetector.js"></script>
         <script src="src/js/broda-typeahead.js"></script>
         <script src="src/js/broda-datatable.js"></script>

@@ -138,7 +138,9 @@ $app['reacao.controller.testrest'] = function () use ($app) {
     return new Reacao\Controller\TestRestfulController($app['orm.em'], $app['security.encoder_factory']);
 };
 
-$app['rest']->resource('/rest', 'reacao.controller.testrest')->convert('id', 'reacao.controller.testrest:converter');
+$app['rest']
+        ->resource('/rest', 'reacao.controller.testrest')
+        ->convert('user', 'reacao.controller.testrest:converter');
 
 /*$app->get('/rest.{_format}', 'reacao.controller.testrest:get');
 $app->put('/rest.{_format}', 'reacao.controller.testrest:put');
