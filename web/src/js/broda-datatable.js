@@ -493,7 +493,7 @@ var DataTableSearchDirective = [
             console.info('searching for ', newVal, forCol);
             var api = dt.api();
             if (forCol) {
-              api = api.column( forCol );
+              api = api.column( parseInt(forCol) );
             }
             api.search( newVal || '' ).draw();
           }
