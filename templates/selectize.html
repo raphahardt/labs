@@ -110,7 +110,7 @@
 
         <div ng-app="teste" ng-controller="TesteCtrl" style="padding: 50px;">
 
-            <pre>model: {{ test|json}}</pre>
+            <pre>model: {{ test | json }}</pre>
             <select selectize='selectizeOptions' ng-model="test" placeholder="Pick a repository..."></select>
 
         </div>
@@ -138,7 +138,15 @@
                                 searchField: 'name',
                                 maxOptions: 4,
                                 options: [],
-                                create: false,
+                                create: function(input) {
+                                    console.log('input',input);
+                                    return {
+                                        name: input,
+                                        username: 'user',
+                                        watchers: 0,
+                                        forks: 0
+                                    };
+                                },/**/
                                 score: function(search) {
                                     var score = this.getScoreFunction(search);
                                     return function(item) {
@@ -160,7 +168,7 @@
                                         '</ul>' +
                                         '</div>'
                                 },
-                                load: 'https://api.github.com/legacy/repos/search/%QUERY'/**/
+                                load: 'https://api.github.com/legacy/repos/search/%QUERY'
                             };
 
                         }
