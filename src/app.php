@@ -12,6 +12,7 @@ use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ArrayCache;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\SecurityServiceProvider;
+use Silex\Provider\SerializerServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\TwigServiceProvider;
@@ -42,6 +43,8 @@ $app->register(new SecurityServiceProvider());
 $app->register(new AsseticServiceProvider());
 
 $app->register(new RestServiceProvider());
+
+$app->register(new SerializerServiceProvider());
 
 $app['file.uploader'] = $app->share(function () use ($app) {
     return new Uploader($app['request'], $app['file.upload.base_path']);

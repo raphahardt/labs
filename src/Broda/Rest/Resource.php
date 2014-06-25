@@ -18,6 +18,7 @@ class Resource
     protected $app;
     protected $path;
     protected $idName;
+    protected $format = '';
     protected $routes;
     public static $defaultMethods = array(
         'all' => 'all',
@@ -32,6 +33,12 @@ class Resource
             $idName = 'id')
     {
         $controller = $this->createServiceForController($controller);
+
+        $pathParts = explode('.', $path);
+        $path = array_shift($pathParts);
+        if (count($pathParts)) {
+            $this->format = '.'.reset($pathParts);
+        }
 
         $this->app = $app;
         $this->path = $path;
@@ -49,7 +56,7 @@ class Resource
 
     protected function itemPath()
     {
-        return sprintf('%s/{%s}', $this->path, $this->idName);
+        return sprintf('%s/{%s}%s', $this->path, $this->idName, $this->format);
     }
 
     public function path($method)
@@ -61,7 +68,7 @@ class Resource
             case 'delete':
                 return $this->itemPath();
             default:
-                return $this->path;
+                return $this->path.$this->format;
         }
     }
 
@@ -69,6 +76,10 @@ class Resource
     {
         if (null === $idName) {
             $idName = $this->idName . 'd';
+        }
+
+        if ($idName === $this->idName) {
+            throw new \InvalidArgumentException('The REST path '.$this->itemPath() . $path.' can not use '.$idName.' as \'id\'');
         }
 
         return new Resource($this->app, $this->itemPath() . $path, $controller, $idName);

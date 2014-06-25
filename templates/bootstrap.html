@@ -50,14 +50,16 @@
             <form ng-submit="ins(form)">
                 <div>
                     <p>username: <input type="text" ng-model="form.username" /></p>
-                    <p>enabled: <input type="checkbox" ng-model="form.ativo" /></p>
+                    <p>email: <input type="text" ng-model="form.email" /></p>
+                    <p>enabled: <input type="checkbox" ng-model="form.enabled" /></p>
                     <p><input type="submit" value="inserir" /></p>
                 </div>
             </form>
             <div ng-repeat="user in users">
                 <div>
                     <p>username: <input type="text" ng-model="user.username" /></p>
-                    <p>enabled: <input type="checkbox" ng-model="user.ativo" /></p>
+                    <p>email: <input type="text" ng-model="user.email" /></p>
+                    <p>enabled: <input type="checkbox" ng-model="user.enabled" /></p>
                     <p>
                         <button type="button" ng-click="save(user)">salvar</button>
                         <button type="button" ng-click="dele(user)">deletar</button>
@@ -197,7 +199,7 @@ Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
                         '$scope', '$resource',
                         function ($scope, $resource) {
 
-                            var users = $resource('rest/:id', {id: '@id'}, {
+                            var users = $resource('rest/:id.json', {id: '@id'}, {
                                 update: {method: 'PUT'}
                             });
 

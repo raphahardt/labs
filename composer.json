@@ -7,7 +7,9 @@
         "symfony/finder": "*",
         "symfony/validator": "*",
         "symfony/security": "*",
+        "symfony/serializer": "*",
 
+        "jms/serializer": "*",
         "kriswallsmith/assetic": "~1",
         "leafo/lessphp": "*",
         "mrclay/minify": "*",
