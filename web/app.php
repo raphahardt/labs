@@ -135,7 +135,7 @@ $app['reacao.controller.publish'] = function () use ($app) {
 };
 
 $app['reacao.controller.testrest'] = function () use ($app) {
-    return new Reacao\Controller\TestRestfulController($app['orm.em'], $app['security.encoder_factory']);
+    return new Reacao\Controller\TestRestfulController($app['orm.em'], $app['security.encoder_factory'], $app['rest']);
 };
 
 $app['rest']

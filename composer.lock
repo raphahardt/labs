@@ -4,70 +4,8 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "cb0c513e82ecf171ec99c4ba86772725",
+    "hash": "2476f4753aba5233a8ecd70060d2b1f0",
     "packages": [
-        {
-            "name": "dflydev/doctrine-orm-service-provider",
-            "version": "v1.0.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/dflydev/dflydev-doctrine-orm-service-provider.git",
-                "reference": "c5820e9e14884ebca9419bc3ceafe52899be6d5a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/dflydev/dflydev-doctrine-orm-service-provider/zipball/c5820e9e14884ebca9419bc3ceafe52899be6d5a",
-                "reference": "c5820e9e14884ebca9419bc3ceafe52899be6d5a",
-                "shasum": ""
-            },
-            "require": {
-                "doctrine/orm": "~2.3",
-                "php": ">=5.3.3",
-                "pimple/pimple": "1.*@dev"
-            },
-            "require-dev": {
-                "cilex/cilex": "1.*@dev",
-                "cilex/console-service-provider": "@dev",
-                "silex/silex": "1.*@dev"
-            },
-            "suggest": {
-                "dflydev/psr0-resource-locator-service-provider": "1.0.*@dev"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Dflydev\\Cilex\\Provider\\DoctrineOrm": "src",
-                    "Dflydev\\Pimple\\Provider\\DoctrineOrm": "src",
-                    "Dflydev\\Silex\\Provider\\DoctrineOrm": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Dragonfly Development Inc.",
-                    "email": "info@dflydev.com",
-                    "homepage": "http://dflydev.com"
-                },
-                {
-                    "name": "Beau Simensen",
-                    "email": "beau@dflydev.com",
-                    "homepage": "http://beausimensen.com"
-                }
-            ],
-            "description": "Doctrine ORM Service Provider",
-            "homepage": "http://dflydev.com/projects/doctrine-orm-service-provider/",
-            "keywords": [
-                "cilex",
-                "doctrine",
-                "orm",
-                "pimple",
-                "silex"
-            ],
-            "time": "2014-06-17 22:52:19"
-        },
         {
             "name": "doctrine/annotations",
             "version": "v1.1.2",
@@ -1153,16 +1091,16 @@
         },
         {
             "name": "pimple/pimple",
-            "version": "v1.1.1",
+            "version": "v2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fabpot/Pimple.git",
-                "reference": "2019c145fe393923f3441b23f29bbdfaa5c58c4d"
+                "reference": "90b4710f115766d12e1a579b816c0974887b87a7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fabpot/Pimple/zipball/2019c145fe393923f3441b23f29bbdfaa5c58c4d",
-                "reference": "2019c145fe393923f3441b23f29bbdfaa5c58c4d",
+                "url": "https://api.github.com/repos/fabpot/Pimple/zipball/90b4710f115766d12e1a579b816c0974887b87a7",
+                "reference": "90b4710f115766d12e1a579b816c0974887b87a7",
                 "shasum": ""
             },
             "require": {
@@ -1171,12 +1109,12 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.1.x-dev"
+                    "dev-master": "2.1.x-dev"
                 }
             },
             "autoload": {
                 "psr-0": {
-                    "Pimple": "lib/"
+                    "Pimple": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -1197,7 +1135,7 @@
                 "container",
                 "dependency injection"
             ],
-            "time": "2013-11-22 08:30:29"
+            "time": "2014-05-01 10:34:00"
         },
         {
             "name": "psr/log",
@@ -1239,59 +1177,63 @@
         },
         {
             "name": "silex/silex",
-            "version": "v1.2.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/silexphp/Silex.git",
-                "reference": "aed7cb81eef9ba1082204027a0e3b60440a212e0"
+                "reference": "30482380e273c2253fcbf2df88939a80453a90ea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/silexphp/Silex/zipball/aed7cb81eef9ba1082204027a0e3b60440a212e0",
-                "reference": "aed7cb81eef9ba1082204027a0e3b60440a212e0",
+                "url": "https://api.github.com/repos/silexphp/Silex/zipball/30482380e273c2253fcbf2df88939a80453a90ea",
+                "reference": "30482380e273c2253fcbf2df88939a80453a90ea",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3",
-                "pimple/pimple": "~1.0",
-                "symfony/event-dispatcher": ">=2.3,<2.6-dev",
-                "symfony/http-foundation": ">=2.3,<2.6-dev",
-                "symfony/http-kernel": ">=2.3,<2.6-dev",
-                "symfony/routing": ">=2.3,<2.6-dev"
+                "pimple/pimple": "~2.1",
+                "symfony/event-dispatcher": ">=2.4,<2.6-dev",
+                "symfony/http-foundation": ">=2.4,<2.6-dev",
+                "symfony/http-kernel": ">=2.4,<2.6-dev",
+                "symfony/routing": ">=2.4,<2.6-dev"
+            },
+            "replace": {
+                "silex/api": "self.version",
+                "silex/providers": "self.version"
             },
             "require-dev": {
                 "doctrine/dbal": "~2.2",
                 "monolog/monolog": "~1.4,>=1.4.1",
-                "phpunit/phpunit": "~3.7",
+                "phpunit/phpunit": "~4.0",
                 "swiftmailer/swiftmailer": "5.*",
-                "symfony/browser-kit": ">=2.3,<2.6-dev",
-                "symfony/config": ">=2.3,<2.6-dev",
-                "symfony/css-selector": ">=2.3,<2.6-dev",
-                "symfony/debug": ">=2.3,<2.6-dev",
-                "symfony/dom-crawler": ">=2.3,<2.6-dev",
-                "symfony/finder": ">=2.3,<2.6-dev",
-                "symfony/form": ">=2.3,<2.6-dev",
-                "symfony/locale": ">=2.3,<2.6-dev",
-                "symfony/monolog-bridge": ">=2.3,<2.6-dev",
-                "symfony/options-resolver": ">=2.3,<2.6-dev",
-                "symfony/process": ">=2.3,<2.6-dev",
-                "symfony/security": ">=2.3,<2.6-dev",
-                "symfony/serializer": ">=2.3,<2.6-dev",
-                "symfony/translation": ">=2.3,<2.6-dev",
-                "symfony/twig-bridge": ">=2.3,<2.6-dev",
-                "symfony/validator": ">=2.3,<2.6-dev",
+                "symfony/browser-kit": ">=2.4,<2.6-dev",
+                "symfony/config": ">=2.4,<2.6-dev",
+                "symfony/css-selector": ">=2.4,<2.6-dev",
+                "symfony/debug": ">=2.4,<2.6-dev",
+                "symfony/dom-crawler": ">=2.4,<2.6-dev",
+                "symfony/finder": ">=2.4,<2.6-dev",
+                "symfony/form": ">=2.4,<2.6-dev",
+                "symfony/locale": ">=2.4,<2.6-dev",
+                "symfony/monolog-bridge": ">=2.4,<2.6-dev",
+                "symfony/options-resolver": ">=2.4,<2.6-dev",
+                "symfony/process": ">=2.4,<2.6-dev",
+                "symfony/security": ">=2.4,<2.6-dev",
+                "symfony/serializer": ">=2.4,<2.6-dev",
+                "symfony/translation": ">=2.4,<2.6-dev",
+                "symfony/twig-bridge": ">=2.4,<2.6-dev",
+                "symfony/validator": ">=2.4,<2.6-dev",
                 "twig/twig": ">=1.8.0,<2.0-dev"
             },
             "suggest": {
-                "symfony/browser-kit": ">=2.3,<2.6-dev",
-                "symfony/css-selector": ">=2.3,<2.6-dev",
-                "symfony/dom-crawler": ">=2.3,<2.6-dev",
-                "symfony/form": ">=2.3,<2.6-dev"
+                "symfony/browser-kit": ">=2.4,<2.6-dev",
+                "symfony/css-selector": ">=2.4,<2.6-dev",
+                "symfony/dom-crawler": ">=2.4,<2.6-dev",
+                "symfony/form": ">=2.4,<2.6-dev"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.2.x-dev"
+                    "dev-master": "2.0.x-dev"
                 }
             },
             "autoload": {
@@ -1321,54 +1263,7 @@
             "keywords": [
                 "microframework"
             ],
-            "time": "2014-03-29 14:15:59"
-        },
-        {
-            "name": "silex/web-profiler",
-            "version": "v1.0.2",
-            "target-dir": "Silex/Provider",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/silexphp/Silex-WebProfiler.git",
-                "reference": "06bd4fcd563d1e114e5c1768dd87da771846fee6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/silexphp/Silex-WebProfiler/zipball/06bd4fcd563d1e114e5c1768dd87da771846fee6",
-                "reference": "06bd4fcd563d1e114e5c1768dd87da771846fee6",
-                "shasum": ""
-            },
-            "require": {
-                "silex/silex": "~1.0",
-                "symfony/stopwatch": "~2.2",
-                "symfony/web-profiler-bundle": "~2.2"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Silex\\Provider\\": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com",
-                    "homepage": "http://fabien.potencier.org",
-                    "role": "Lead Developer"
-                }
-            ],
-            "description": "A WebProfiler for Silex",
-            "homepage": "http://silex.sensiolabs.org/",
-            "time": "2013-12-05 21:22:21"
+            "time": "2014-06-27 06:12:48"
         },
         {
             "name": "symfony/console",
@@ -2012,55 +1907,6 @@
             "time": "2014-04-18 20:40:52"
         },
         {
-            "name": "symfony/stopwatch",
-            "version": "v2.5.0",
-            "target-dir": "Symfony/Component/Stopwatch",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/Stopwatch.git",
-                "reference": "724d73604ebe6c1c9bdf36533b556123bd9075a1"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Stopwatch/zipball/724d73604ebe6c1c9bdf36533b556123bd9075a1",
-                "reference": "724d73604ebe6c1c9bdf36533b556123bd9075a1",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.3"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.5-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Symfony\\Component\\Stopwatch\\": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com",
-                    "homepage": "http://fabien.potencier.org",
-                    "role": "Lead Developer"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "http://symfony.com/contributors"
-                }
-            ],
-            "description": "Symfony Stopwatch Component",
-            "homepage": "http://symfony.com",
-            "time": "2014-04-18 20:40:13"
-        },
-        {
             "name": "symfony/translation",
             "version": "v2.5.0",
             "target-dir": "Symfony/Component/Translation",
@@ -2116,80 +1962,6 @@
             "description": "Symfony Translation Component",
             "homepage": "http://symfony.com",
             "time": "2014-05-22 13:47:45"
-        },
-        {
-            "name": "symfony/twig-bridge",
-            "version": "v2.5.0",
-            "target-dir": "Symfony/Bridge/Twig",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/TwigBridge.git",
-                "reference": "47881adb360baf02f1004d55311cdd716b4976aa"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/TwigBridge/zipball/47881adb360baf02f1004d55311cdd716b4976aa",
-                "reference": "47881adb360baf02f1004d55311cdd716b4976aa",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.3",
-                "symfony/security-csrf": "~2.4",
-                "twig/twig": "~1.12"
-            },
-            "require-dev": {
-                "symfony/console": "~2.2",
-                "symfony/expression-language": "~2.4",
-                "symfony/form": "~2.2",
-                "symfony/http-kernel": "~2.2",
-                "symfony/routing": "~2.2",
-                "symfony/security": "~2.4",
-                "symfony/stopwatch": "~2.2",
-                "symfony/templating": "~2.1",
-                "symfony/translation": "~2.2",
-                "symfony/yaml": "~2.0"
-            },
-            "suggest": {
-                "symfony/expression-language": "For using the ExpressionExtension",
-                "symfony/form": "For using the FormExtension",
-                "symfony/http-kernel": "For using the HttpKernelExtension",
-                "symfony/routing": "For using the RoutingExtension",
-                "symfony/security": "For using the SecurityExtension",
-                "symfony/stopwatch": "For using the StopwatchExtension",
-                "symfony/templating": "For using the TwigEngine",
-                "symfony/translation": "For using the TranslationExtension",
-                "symfony/yaml": "For using the YamlExtension"
-            },
-            "type": "symfony-bridge",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.5-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Symfony\\Bridge\\Twig\\": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com",
-                    "homepage": "http://fabien.potencier.org",
-                    "role": "Lead Developer"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "http://symfony.com/contributors"
-                }
-            ],
-            "description": "Symfony Twig Bridge",
-            "homepage": "http://symfony.com",
-            "time": "2014-05-26 15:36:38"
         },
         {
             "name": "symfony/validator",
@@ -2264,63 +2036,6 @@
             "time": "2014-05-31 02:02:56"
         },
         {
-            "name": "symfony/web-profiler-bundle",
-            "version": "v2.5.0",
-            "target-dir": "Symfony/Bundle/WebProfilerBundle",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/WebProfilerBundle.git",
-                "reference": "acefc269c597e5564692274afdd70ecd814e74f6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/WebProfilerBundle/zipball/acefc269c597e5564692274afdd70ecd814e74f6",
-                "reference": "acefc269c597e5564692274afdd70ecd814e74f6",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.3",
-                "symfony/http-kernel": "~2.3",
-                "symfony/routing": "~2.2",
-                "symfony/twig-bridge": "~2.2"
-            },
-            "require-dev": {
-                "symfony/config": "~2.2",
-                "symfony/dependency-injection": "~2.0",
-                "symfony/stopwatch": "~2.2"
-            },
-            "type": "symfony-bundle",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.5-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Symfony\\Bundle\\WebProfilerBundle\\": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com",
-                    "homepage": "http://fabien.potencier.org",
-                    "role": "Lead Developer"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "http://symfony.com/contributors"
-                }
-            ],
-            "description": "Symfony WebProfilerBundle",
-            "homepage": "http://symfony.com",
-            "time": "2014-05-12 09:28:39"
-        },
-        {
             "name": "twig/twig",
             "version": "v1.15.1",
             "source": {
@@ -2385,9 +2100,9 @@
 
     ],
     "minimum-stability": "stable",
-    "stability-flags": [
-
-    ],
+    "stability-flags": {
+        "silex/silex": 20
+    },
     "platform": [
 
     ],

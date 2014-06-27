@@ -5,10 +5,12 @@ namespace Reacao\Model;
 use Broda\Model\AbstractModel;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as JMS;
 use Reacao\Model\Role;
 use Reacao\Model\Usuario;
 use Reacao\Model\UsuarioRepository;
 use Serializable;
+use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
 use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -42,6 +44,8 @@ class Usuario extends AbstractModel implements AdvancedUserInterface, EquatableI
      * @ORM\Column(type="string", length=25, unique=true)
      *
      * @Assert\NotBlank
+     *
+     * @JMS\Type("string")
      */
     private $username;
 
@@ -49,26 +53,36 @@ class Usuario extends AbstractModel implements AdvancedUserInterface, EquatableI
      * @ORM\Column(type="string", length=128)
      *
      * @Assert\NotBlank
+     *
+     * @JMS\Type("string")
      */
     private $password;
 
     /**
      * @ORM\Column(type="string", length=64, unique=true)
+     *
+     * @JMS\Exclude
      */
     private $salt;
 
     /**
      * @ORM\Column(type="string", length=60, unique=true)
+     *
+     * @JMS\Type("string")
      */
     private $email;
 
     /**
      * @ORM\Column(name="is_active", type="boolean")
+     *
+     * @JMS\Type("boolean")
      */
     private $isActive;
 
     /**
      * @var ArrayCollection
+     *
+     * @JMS\Type("ArrayCollection<string>")
      *
      * @ORM\ManyToMany(targetEntity="Role", inversedBy="usuarios")
      */
@@ -115,6 +129,16 @@ class Usuario extends AbstractModel implements AdvancedUserInterface, EquatableI
     public function setPassword($password)
     {
         $this->password = $password;
+    }
+
+    public function encodePassword(EncoderFactoryInterface $encoderFactory)
+    {
+        $this->password = $encoderFactory->getEncoder($this)->encodePassword($this->password, $this->salt);
+    }
+
+    public function isPasswordValid(EncoderFactoryInterface $encoderFactory, $inputPassword)
+    {
+        return $encoderFactory->getEncoder($this)->isPasswordValid($this->password, $inputPassword, $this->salt);
     }
 
     public function getEmail()

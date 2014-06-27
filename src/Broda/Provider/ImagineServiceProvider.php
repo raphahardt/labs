@@ -8,8 +8,8 @@
 
 namespace Broda\Provider;
 
-use Silex\Application;
-use Silex\ServiceProviderInterface;
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
 
 /**
  * Classe ImagineServiceProvider
@@ -18,10 +18,10 @@ use Silex\ServiceProviderInterface;
 class ImagineServiceProvider implements ServiceProviderInterface
 {
 
-    public function register(Application $app)
+    public function register(Container $app)
     {
         if (!isset($app['imagine.factory'])) {
-            $app['imagine.factory'] = function () {
+            $app['imagine.factory'] = $app->factory(function () {
                 if (extension_loaded('imagick') && class_exists('\Imagick')) {
                     return 'Imagick';
                 }
@@ -29,18 +29,13 @@ class ImagineServiceProvider implements ServiceProviderInterface
                     return 'Gmagick';
                 }
                 return 'Gd';
-            };
+            });
         }
 
-        $app['imagine'] = $app->share(function ($app) {
+        $app['imagine'] = function ($app) {
             $class = sprintf('\Imagine\%s\Imagine', $app['imagine.factory']);
             return new $class();
-        });
-    }
-
-    public function boot(Application $app)
-    {
-
+        };
     }
 
 }

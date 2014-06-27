@@ -1,12 +1,13 @@
 <?php
 
 use Broda\Application;
+use Broda\Component\Doctrine\Provider\DoctrineRegistryServiceProvider;
+use Broda\Component\Rest\Provider\RestServiceProvider;
 use Broda\File\Unpacker;
 use Broda\File\Uploader;
 use Broda\Provider\AsseticServiceProvider;
 use Broda\Provider\ImagineServiceProvider;
-use Broda\Provider\RestServiceProvider;
-use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
+use Broda\Component\Doctrine\Provider\DoctrineOrmServiceProvider;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ArrayCache;
@@ -16,7 +17,6 @@ use Silex\Provider\SerializerServiceProvider;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\TwigServiceProvider;
-use Silex\Provider\UrlGeneratorServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
@@ -24,19 +24,19 @@ use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
 
 $app = new Application();
 
-$app->register(new UrlGeneratorServiceProvider());
 $app->register(new SessionServiceProvider());
 $app->register(new TwigServiceProvider());
 $app->register(new ServiceControllerServiceProvider());
 $app->register(new ImagineServiceProvider());
 $app->register(new ValidatorServiceProvider());
-$app['validator.mapping.class_metadata_factory'] = $app->share(function ($app) {
+$app['validator.mapping.class_metadata_factory'] = function ($app) {
     $reader = new CachedReader(new AnnotationReader(), new ArrayCache());
     return new ClassMetadataFactory(new AnnotationLoader($reader));
-});
+};
 
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());
+$app->register(new DoctrineRegistryServiceProvider());
 
 $app->register(new SecurityServiceProvider());
 
@@ -46,13 +46,13 @@ $app->register(new RestServiceProvider());
 
 $app->register(new SerializerServiceProvider());
 
-$app['file.uploader'] = $app->share(function () use ($app) {
+$app['file.uploader'] = function () use ($app) {
     return new Uploader($app['request'], $app['file.upload.base_path']);
-});
+};
 
-$app['file.unpacker'] = $app->share(function () use ($app) {
+$app['file.unpacker'] = function () use ($app) {
     return new Unpacker($app['file.upload.base_path'].'/unpacked_tmp');
-});
+};
 
 /*$app['twig'] = $app->share($app->extend('twig', function ($twig) use ($app) {
     /* @var $twig \Twig_Environment * /

@@ -1,6 +1,6 @@
 <?php
 
-namespace Broda\Rest;
+namespace Broda\Component\Rest;
 
 use Silex\Application;
 
