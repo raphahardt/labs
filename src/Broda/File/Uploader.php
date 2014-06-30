@@ -60,8 +60,8 @@ class Uploader
             $this->completeFile = $parcialFile->getSize() < (int)$rangeTotal ? null : $parcialFile;
 
             return null !== $this->completeFile ? self::COMPLETE : self::PARTIAL;
-        }
-        else {
+
+        } else {
             if (is_file($this->path . $originalName)) {
                 $this->completeFile = new File($this->path . $originalName);
             }
@@ -91,8 +91,7 @@ class Uploader
 
     private function getContentDispositionFilename($defaultFilename = '')
     {
-        $name = $this->request->server->get('HTTP_CONTENT_DISPOSITION',
-                '"' . $defaultFilename . '"');
+        $name = $this->request->server->get('HTTP_CONTENT_DISPOSITION', '"' . $defaultFilename . '"');
         $originalName = substr($name,
                 strpos($name, '"') + 1,
                 strrpos($name, '"') - strpos($name, '"') - 1);

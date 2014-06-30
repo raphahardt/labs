@@ -1,16 +1,14 @@
 <?php
 
 use Broda\Application;
+use Broda\Component\Doctrine\Provider\DoctrineOrmServiceProvider;
 use Broda\Component\Doctrine\Provider\DoctrineRegistryServiceProvider;
 use Broda\Component\Rest\Provider\RestServiceProvider;
+use Broda\Component\Validator\Provider\ValidatorExtendedServiceProvider;
 use Broda\File\Unpacker;
 use Broda\File\Uploader;
 use Broda\Provider\AsseticServiceProvider;
 use Broda\Provider\ImagineServiceProvider;
-use Broda\Component\Doctrine\Provider\DoctrineOrmServiceProvider;
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\Common\Annotations\CachedReader;
-use Doctrine\Common\Cache\ArrayCache;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\SecurityServiceProvider;
 use Silex\Provider\SerializerServiceProvider;
@@ -19,8 +17,7 @@ use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
-use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
+
 
 $app = new Application();
 
@@ -29,10 +26,7 @@ $app->register(new TwigServiceProvider());
 $app->register(new ServiceControllerServiceProvider());
 $app->register(new ImagineServiceProvider());
 $app->register(new ValidatorServiceProvider());
-$app['validator.mapping.class_metadata_factory'] = function ($app) {
-    $reader = new CachedReader(new AnnotationReader(), new ArrayCache());
-    return new ClassMetadataFactory(new AnnotationLoader($reader));
-};
+$app->register(new ValidatorExtendedServiceProvider());
 
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());

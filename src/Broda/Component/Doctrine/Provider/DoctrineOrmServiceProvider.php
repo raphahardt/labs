@@ -31,8 +31,9 @@ use Pimple\ServiceProviderInterface;
  *
  * @author Beau Simensen <beau@dflydev.com>
  */
-class DoctrineOrmServiceProvider extends ServiceProviderInterface
+class DoctrineOrmServiceProvider implements ServiceProviderInterface
 {
+
     public function register(Container $app)
     {
         foreach ($this->getOrmDefaults() as $key => $value) {
@@ -95,9 +96,9 @@ class DoctrineOrmServiceProvider extends ServiceProviderInterface
 
                 $ems[$name] = function ($ems) use ($app, $options, $config) {
                     return EntityManager::create(
-                        $app['dbs'][$options['connection']],
-                        $config,
-                        $app['dbs.event_manager'][$options['connection']]
+                                    $app['dbs'][$options['connection']],
+                                    $config,
+                                    $app['dbs.event_manager'][$options['connection']]
                     );
                 };
             }
@@ -133,10 +134,10 @@ class DoctrineOrmServiceProvider extends ServiceProviderInterface
                 $config->setQuoteStrategy($app['orm.strategy.quote']);
 
                 $chain = $app['orm.mapping_driver_chain.locator']($name);
-                foreach ((array) $options['mappings'] as $entity) {
+                foreach ((array)$options['mappings'] as $entity) {
                     if (!is_array($entity)) {
                         throw new \InvalidArgumentException(
-                            "The 'orm.em.options' option 'mappings' should be an array of arrays."
+                        "The 'orm.em.options' option 'mappings' should be an array of arrays."
                         );
                     }
 
@@ -150,11 +151,9 @@ class DoctrineOrmServiceProvider extends ServiceProviderInterface
 
                     switch ($entity['type']) {
                         case 'annotation':
-                            $useSimpleAnnotationReader =
-                                isset($entity['use_simple_annotation_reader'])
-                                ? $entity['use_simple_annotation_reader']
-                                : true;
-                            $driver = $config->newDefaultAnnotationDriver((array) $entity['path'], $useSimpleAnnotationReader);
+                            $useSimpleAnnotationReader = isset($entity['use_simple_annotation_reader']) ? $entity['use_simple_annotation_reader'] : true;
+                            $driver = $config->newDefaultAnnotationDriver((array)$entity['path'],
+                                    $useSimpleAnnotationReader);
                             $chain->addDriver($driver, $entity['namespace']);
                             break;
                         case 'yml':
@@ -171,12 +170,11 @@ class DoctrineOrmServiceProvider extends ServiceProviderInterface
                             break;
                         default:
                             throw new \InvalidArgumentException(sprintf('"%s" is not a recognized driver', $entity['type']));
-                            break;
                     }
                 }
                 $config->setMetadataDriverImpl($chain);
 
-                foreach ((array) $options['types'] as $typeName => $typeClass) {
+                foreach ((array)$options['types'] as $typeName => $typeClass) {
                     if (Type::hasType($typeName)) {
                         Type::overrideType($typeName, $typeClass);
                     } else {
@@ -216,14 +214,14 @@ class DoctrineOrmServiceProvider extends ServiceProviderInterface
 
             $driver = $options[$cacheNameKey]['driver'];
 
-            $cacheInstanceKey = 'orm.cache.instances.'.$name.'.'.$cacheName;
+            $cacheInstanceKey = 'orm.cache.instances.' . $name . '.' . $cacheName;
             if (isset($app[$cacheInstanceKey])) {
                 return $app[$cacheInstanceKey];
             }
 
             $cache = $app['orm.cache.factory']($driver, $options[$cacheNameKey]);
 
-            if(isset($options['cache_namespace']) && $cache instanceof CacheProvider) {
+            if (isset($options['cache_namespace']) && $cache instanceof CacheProvider) {
                 $cache->setNamespace($options['cache_namespace']);
             }
 
@@ -331,7 +329,7 @@ class DoctrineOrmServiceProvider extends ServiceProviderInterface
                 $name = $app['orm.ems.default'];
             }
 
-            $cacheInstanceKey = 'orm.mapping_driver_chain.instances.'.$name;
+            $cacheInstanceKey = 'orm.mapping_driver_chain.instances.' . $name;
             if (isset($app[$cacheInstanceKey])) {
                 return $app[$cacheInstanceKey];
             }
@@ -404,7 +402,7 @@ class DoctrineOrmServiceProvider extends ServiceProviderInterface
     protected function getOrmDefaults()
     {
         return array(
-            'orm.proxies_dir' => __DIR__.'/../../../../../../../../cache/doctrine/proxies',
+            'orm.proxies_dir' => __DIR__ . '/../../../../../../../../cache/doctrine/proxies',
             'orm.proxies_namespace' => 'DoctrineProxy',
             'orm.auto_generate_proxies' => true,
             'orm.default_cache' => 'array',
@@ -416,4 +414,5 @@ class DoctrineOrmServiceProvider extends ServiceProviderInterface
             'orm.default_repository_class' => 'Doctrine\ORM\EntityRepository',
         );
     }
+
 }
