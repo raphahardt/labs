@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "2476f4753aba5233a8ecd70060d2b1f0",
+    "hash": "5c1d4d4d72111c576c8647d74b0c2377",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -1181,12 +1181,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/silexphp/Silex.git",
-                "reference": "30482380e273c2253fcbf2df88939a80453a90ea"
+                "reference": "55cb6a176750841ccb1894b7e877bbca1d09e2b1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/silexphp/Silex/zipball/30482380e273c2253fcbf2df88939a80453a90ea",
-                "reference": "30482380e273c2253fcbf2df88939a80453a90ea",
+                "url": "https://api.github.com/repos/silexphp/Silex/zipball/55cb6a176750841ccb1894b7e877bbca1d09e2b1",
+                "reference": "55cb6a176750841ccb1894b7e877bbca1d09e2b1",
                 "shasum": ""
             },
             "require": {
@@ -1263,7 +1263,7 @@
             "keywords": [
                 "microframework"
             ],
-            "time": "2014-06-27 06:12:48"
+            "time": "2014-06-30 10:08:28"
         },
         {
             "name": "symfony/console",

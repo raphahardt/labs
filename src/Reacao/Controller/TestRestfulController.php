@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 namespace Reacao\Controller;
 
 use Broda\Component\Rest\RestResponse;
@@ -13,7 +7,6 @@ use Broda\Component\Rest\RestService;
 use Doctrine\ORM\EntityManager;
 use Reacao\Model\Usuario;
 use Reacao\Model\Usuario\Administrador;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
