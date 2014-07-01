@@ -128,6 +128,112 @@ function DataTableProvider() {
               return !!value;
           }
         },
+
+        createAjaxCallback: function(opts) {
+
+          var method = opts.ajaxMethod,
+              ajaxUrl = opts.ajax,
+              pipeline = opts.pipeline || 1;
+
+          if (pipeline <= 1) {
+
+            // não tem pipeline, chamar um ajax por página
+            return function(sendData, cb, opts) {
+              $http({ method: method, url: ajaxUrl, data: sendData })
+              .success(function(data) {
+                cb(data);
+              })
+              .error(function(data, status, headers, config) {
+                $scope.$emit('datatable:error', data, status, headers, config);
+              });
+            };
+
+          } else {
+
+            // tem pipeline, entao guardar cache das paginas para diminuir chamadas
+            // ajax durante o uso
+
+            // Private variables for storing the cache
+            var cacheLower = -1;
+            var cacheUpper = null;
+            var cacheLastRequest = null;
+            var cacheLastJson = null;
+
+            return function(request, cb, settings) {
+              var ajax = false;
+              var requestStart = request.start;
+              var drawStart = request.start;
+              var requestLength = request.length;
+              var requestEnd = requestStart + requestLength;
+
+              if (settings.clearCache) {
+                // API requested that the cache be cleared
+                ajax = true;
+                settings.clearCache = false;
+              }
+              else if (cacheLower < 0 || requestStart < cacheLower || requestEnd > cacheUpper) {
+                // outside cached data - need to make a request
+                ajax = true;
+              }
+              else if (
+                  !angular.equals(request.order, cacheLastRequest.order) ||
+                  !angular.equals(request.columns, cacheLastRequest.columns) ||
+                  !angular.equals(request.search, cacheLastRequest.search)
+                  ) {
+                // properties changed (ordering, columns, searching)
+                ajax = true;
+              }
+
+              // Store the request for checking next time around
+              cacheLastRequest = angular.copy(request);
+
+              if (ajax) {
+                // Need data from the server
+                if (requestStart < cacheLower) {
+                  requestStart = requestStart - (requestLength * (pipeline - 1));
+
+                  if (requestStart < 0) {
+                    requestStart = 0;
+                  }
+                }
+
+                cacheLower = requestStart;
+                cacheUpper = requestStart + (requestLength * pipeline);
+
+                request.start = requestStart;
+                request.length = requestLength * pipeline;
+
+                $http({ method: method, url: ajaxUrl, data: request })
+                .success(function(json) {
+                  cacheLastJson = angular.copy(json);
+
+                  if (cacheLower != drawStart) {
+                    json.data.splice(0, drawStart - cacheLower);
+                  }
+                  json.data.splice(requestLength, json.data.length);
+
+                  cb(json);
+
+                })
+                .error(function(data, status, headers, config) {
+                  $scope.$emit('datatable:error', data, status, headers, config);
+                });
+
+              }
+              else {
+                var json = angular.copy(cacheLastJson);
+                json.draw = request.draw; // Update the echo for each response
+                json.data.splice(0, requestStart - cacheLower);
+                json.data.splice(requestLength, json.data.length);
+
+                cb(json);
+              }
+            };
+
+          }
+
+        },
+
         /**
          * Normalize the options object
          *
@@ -149,18 +255,8 @@ function DataTableProvider() {
           // for increase performance
           optsCopy.autoWidth = false;
 
-          var method = optsCopy.ajaxMethod;
           // triggered when data is get from server
-          var ajaxUrl = optsCopy.ajax;
-          optsCopy.ajax = function(sendData, cb, opts) {
-            $http({ method: method, url: ajaxUrl, data: sendData })
-            .success(function(data) {
-              cb(data);
-            })
-            .error(function(data, status, headers, config) {
-              $scope.$emit('datatable:error', data, status, headers, config);
-            });
-          };
+          optsCopy.ajax = this.createAjaxCallback(optsCopy);
 
           // triggered when row is created (some columns could be hidden, so
           // compile is not safe here)
