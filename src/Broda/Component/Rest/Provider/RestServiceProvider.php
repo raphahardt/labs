@@ -39,17 +39,42 @@ class RestServiceProvider implements ServiceProviderInterface, EventListenerProv
             return new RestService($app);
         };
 
+        $app['rest.listener'] = function() use ($app) {
+            return new RestResponseListener($app['rest']);
+        };
+
         $app['rest.serializer'] = function() use ($app) {
             $registry = isset($app['doctrine_registry']) ? $app['doctrine_registry'] : null;
-            return SerializerBuilder::create()
-                            ->setObjectConstructor(NaturalObjectConstructor::create($registry))
-                            ->build();
+            $builder = SerializerBuilder::create()
+                            ->setObjectConstructor(NaturalObjectConstructor::create($registry));
+
+            if (isset($app['orm.em'])) {
+                // if Doctrine ORM is defined, get the same annotation reader to not conflict with
+                // doctrine's $useSimpleAnnotations flag
+                $driver = $app['orm.em']->getConfiguration()->getMetadataDriverImpl();
+
+                if ($driver instanceof \Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain) {
+                    $drivers = $driver->getDrivers();
+                } else {
+                    $drivers = array($driver);
+                }
+
+                foreach ($drivers as $driver) {
+                    // iterate over all drivers to find the annotation driver
+                    if ($driver instanceof \Doctrine\Common\Persistence\Mapping\Driver\AnnotationDriver) {
+                        $builder->setAnnotationReader($driver->getReader());
+                        break;
+                    }
+                }
+            }
+
+            return $builder->build();
         };
     }
 
     public function subscribe(Container $app, EventDispatcherInterface $dispatcher)
     {
-        $dispatcher->addSubscriber(new RestResponseListener($app['rest']));
+        $dispatcher->addSubscriber($app['rest.listener']);
     }
 
 }
