@@ -18,6 +18,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\DefaultEntityListenerResolver;
 use Doctrine\ORM\Mapping\DefaultNamingStrategy;
 use Doctrine\ORM\Mapping\DefaultQuoteStrategy;
+use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Mapping\Driver\Driver;
 use Doctrine\ORM\Mapping\Driver\StaticPHPDriver;
 use Doctrine\ORM\Mapping\Driver\XmlDriver;
@@ -151,9 +152,13 @@ class DoctrineOrmServiceProvider implements ServiceProviderInterface
 
                     switch ($entity['type']) {
                         case 'annotation':
-                            $useSimpleAnnotationReader = isset($entity['use_simple_annotation_reader']) ? $entity['use_simple_annotation_reader'] : true;
-                            $driver = $config->newDefaultAnnotationDriver((array)$entity['path'],
-                                    $useSimpleAnnotationReader);
+                            if (isset($app['annotation.reader'])) {
+                                $driver = new AnnotationDriver($app['annotation.reader'], (array)$entity['path']);
+                            } else {
+                                $useSimpleAnnotationReader = isset($entity['use_simple_annotation_reader']) ? $entity['use_simple_annotation_reader'] : true;
+                                $driver = $config->newDefaultAnnotationDriver((array)$entity['path'],
+                                        $useSimpleAnnotationReader);
+                            }
                             $chain->addDriver($driver, $entity['namespace']);
                             break;
                         case 'yml':

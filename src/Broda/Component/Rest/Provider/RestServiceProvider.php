@@ -44,28 +44,11 @@ class RestServiceProvider implements ServiceProviderInterface, EventListenerProv
         };
 
         $app['rest.serializer'] = function() use ($app) {
-            $registry = isset($app['doctrine_registry']) ? $app['doctrine_registry'] : null;
             $builder = SerializerBuilder::create()
-                            ->setObjectConstructor(NaturalObjectConstructor::create($registry));
+                            ->setObjectConstructor(NaturalObjectConstructor::create($app));
 
-            if (isset($app['orm.em'])) {
-                // if Doctrine ORM is defined, get the same annotation reader to not conflict with
-                // doctrine's $useSimpleAnnotations flag
-                $driver = $app['orm.em']->getConfiguration()->getMetadataDriverImpl();
-
-                if ($driver instanceof \Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain) {
-                    $drivers = $driver->getDrivers();
-                } else {
-                    $drivers = array($driver);
-                }
-
-                foreach ($drivers as $driver) {
-                    // iterate over all drivers to find the annotation driver
-                    if ($driver instanceof \Doctrine\Common\Persistence\Mapping\Driver\AnnotationDriver) {
-                        $builder->setAnnotationReader($driver->getReader());
-                        break;
-                    }
-                }
+            if (isset($app['annotation.reader'])) {
+                $builder->setAnnotationReader($app['annotation.reader']);
             }
 
             return $builder->build();

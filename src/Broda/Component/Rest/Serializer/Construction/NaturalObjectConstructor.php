@@ -2,12 +2,11 @@
 
 namespace Broda\Component\Rest\Serializer\Construction;
 
-use Doctrine\Common\Persistence\ManagerRegistry;
-use JMS\Serializer\Construction\DoctrineObjectConstructor;
 use JMS\Serializer\Construction\UnserializeObjectConstructor;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\VisitorInterface;
+use Pimple\Container;
 
 /**
  * Esta classe representa o "construtor" dos objetos que são deserializados
@@ -26,12 +25,9 @@ use JMS\Serializer\VisitorInterface;
  */
 class NaturalObjectConstructor extends UnserializeObjectConstructor
 {
-    public static function create(ManagerRegistry $managerRegistry = null)
+    public static function create(Container $app)
     {
-        if (null === $managerRegistry) {
-            return new static();
-        }
-        return new DoctrineObjectConstructor($managerRegistry, new static());
+        return new DoctrineObjectConstructor($app, new static());
     }
 
     public function construct(VisitorInterface $visitor, ClassMetadata $metadata, $data, array $type, DeserializationContext $context)

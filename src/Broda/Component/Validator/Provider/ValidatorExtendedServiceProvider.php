@@ -111,7 +111,11 @@ class ValidatorExtendedServiceProvider implements ServiceProviderInterface
 
                 switch($loader['type']) {
                     case 'annotation':
-                        $reader = new CachedReader(new AnnotationReader, new ArrayCache);
+                        if (isset($app['annotation.reader'])) {
+                            $reader = $app['annotation.reader'];
+                        } else {
+                            $reader = new CachedReader(new AnnotationReader, new ArrayCache);
+                        }
                         $loaders[] = new AnnotationLoader($reader);
                     case 'xml':
                         if (!$loader['path']) {

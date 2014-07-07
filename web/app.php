@@ -5,7 +5,7 @@ use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\Debug\ExceptionHandler;
 use Symfony\Component\HttpFoundation\Request;
 
-require __DIR__.'/../src/autoload.php';
+$loader = require __DIR__.'/../vendor/autoload.php';
 
 $request = Request::createFromGlobals();
 $env = $request->getHost() === 'localhost' ? 'dev' : 'prod';

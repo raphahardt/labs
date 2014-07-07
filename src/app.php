@@ -1,6 +1,7 @@
 <?php
 
 use Broda\Application;
+use Broda\Component\Doctrine\Provider\DoctrineAnnotationServiceProvider;
 use Broda\Component\Doctrine\Provider\DoctrineOrmServiceProvider;
 use Broda\Component\Doctrine\Provider\DoctrineRegistryServiceProvider;
 use Broda\Component\File\Provider\UploaderServiceProvider;
@@ -28,9 +29,12 @@ $app->register(new ImagineServiceProvider());
 $app->register(new ValidatorServiceProvider());
 $app->register(new ValidatorExtendedServiceProvider());
 
+$app->register(new DoctrineAnnotationServiceProvider(), array(
+    'annotation.loaders' => array($loader)
+));
 $app->register(new DoctrineServiceProvider());
 $app->register(new DoctrineOrmServiceProvider());
-$app->register(new DoctrineRegistryServiceProvider());
+//$app->register(new DoctrineRegistryServiceProvider());
 
 $app->register(new SecurityServiceProvider());
 
