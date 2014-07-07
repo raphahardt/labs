@@ -86,5 +86,9 @@ $app['security.access_rules'] = array(
 $app['twig.path'] = array(__DIR__ . '/../templates');
 //$app['twig.options'] = array('cache' => __DIR__.'/../var/cache/twig');
 
-// Uploader
-$app['file.upload.base_path'] = dirname(__DIR__) . '/web/public';
+// Public
+$app['public_path'] = dirname(__DIR__) . '/web/public';
+
+$app['extractor.options'] = array(
+    'to' => $app['public_path'] . '/unzip'
+);

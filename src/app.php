@@ -3,10 +3,10 @@
 use Broda\Application;
 use Broda\Component\Doctrine\Provider\DoctrineOrmServiceProvider;
 use Broda\Component\Doctrine\Provider\DoctrineRegistryServiceProvider;
+use Broda\Component\File\Provider\UploaderServiceProvider;
+use Broda\Component\FileExtractor\Provider\FileExtractorServiceProvider;
 use Broda\Component\Rest\Provider\RestServiceProvider;
 use Broda\Component\Validator\Provider\ValidatorExtendedServiceProvider;
-use Broda\File\Unpacker;
-use Broda\File\Uploader;
 use Broda\Provider\AsseticServiceProvider;
 use Broda\Provider\ImagineServiceProvider;
 use Silex\Provider\DoctrineServiceProvider;
@@ -40,13 +40,8 @@ $app->register(new RestServiceProvider());
 
 $app->register(new SerializerServiceProvider());
 
-$app['file.uploader'] = function () use ($app) {
-    return new Uploader($app['request'], $app['file.upload.base_path']);
-};
-
-$app['file.unpacker'] = function () use ($app) {
-    return new Unpacker($app['file.upload.base_path'].'/unpacked_tmp');
-};
+$app->register(new UploaderServiceProvider());
+$app->register(new FileExtractorServiceProvider());
 
 /*$app['twig'] = $app->share($app->extend('twig', function ($twig) use ($app) {
     /* @var $twig \Twig_Environment * /

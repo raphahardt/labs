@@ -40,6 +40,8 @@ class Uploader
 
     public function upload(UploadedFile $uploadedFile)
     {
+        $this->completeFile = null;
+        
         // pega o range-content (Content-Range: bytes 0-123/400)
         $range = $this->getContentRange();
         $rangeTotal = $range['total'];

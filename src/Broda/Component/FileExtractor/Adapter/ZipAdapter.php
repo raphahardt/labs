@@ -1,33 +1,35 @@
 <?php
 
-namespace Broda\Component\File;
+namespace Broda\Component\FileExtractor\Adapter;
 
-use Symfony\Component\HttpFoundation\File\File;
 use ZipArchive;
 
 /**
- * Description of ZipPackedFile
+ * Description of ZipAdapter
  *
  * @author raphael
  */
-class ZipPackedFile extends PackedFile
+class ZipAdapter extends AbstractAdapter
 {
-    /** @var ZipArchive */
+    /**
+     *
+     * @var ZipArchive
+     */
     protected $zipArchive;
 
-    public function extract(File $file, $to)
+    protected function initialize(\SplFileInfo $file)
     {
-        $this->init($file);
-        $this->zipArchive->extractTo($to);
-        $this->zipArchive->close();
-        return true;
-    }
 
-    protected function initialize()
-    {
+        if (!extension_loaded('zip')) {
+            throw new \RuntimeException(sprintf(
+                'Unable to use %s as the ZIP extension is not available.',
+                __CLASS__
+            ));
+        }
+
         $this->zipArchive = new ZipArchive();
 
-        if (true !== ($resultCode = $this->zipArchive->open($this->file->getPathname(), ZipArchive::CREATE))) {
+        if (true !== ($resultCode = $this->zipArchive->open($file->getPathname(), ZipArchive::CREATE))) {
             switch ($resultCode) {
             case ZipArchive::ER_EXISTS:
                 $errMsg = 'File already exists.';
@@ -64,4 +66,15 @@ class ZipPackedFile extends PackedFile
             throw new \RuntimeException(sprintf('%s', $errMsg));
         }
     }
+
+    protected function destroy()
+    {
+        $this->zipArchive->close();
+    }
+
+    protected function doExtract($to)
+    {
+        $this->zipArchive->extractTo($to);
+    }
+
 }
