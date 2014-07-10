@@ -396,11 +396,15 @@ var DataTableController = [
     this.addColumn = function(colIndex, colAttrs) {
       var col = controller.options.columns[colIndex],
           name = colAttrs.name,
+          data = colAttrs.data,
+          defaultContent = colAttrs.default,
           template = colAttrs.template;
 
       columnsLeft--;
 
-      col.data = name;
+      col.data = data || name;
+      col.name = name;
+      col.defaultContent = defaultContent || '';
       col.visible = angular.isDefined(colAttrs.visible) ? $datatable.toBoolean(colAttrs.visible) : true;
       col.orderable = angular.isDefined(colAttrs.orderable) ? $datatable.toBoolean(colAttrs.orderable) : true;
       if (template) {
@@ -418,8 +422,22 @@ var DataTableController = [
       }
 
       colAttrs.$observe('name', function (val) {
+        if (col.name !== val) {
+          col.name = val;
+          needToReinitialize = true;
+        }
+      });
+
+      colAttrs.$observe('data', function (val) {
         if (col.data !== val) {
           col.data = val;
+          needToReinitialize = true;
+        }
+      });
+
+      colAttrs.$observe('default', function (val) {
+        if (col.defaultContent !== val) {
+          col.defaultContent = val;
           needToReinitialize = true;
         }
       });
