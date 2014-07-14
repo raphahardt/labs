@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="//cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
+    </head>
+    <body>
+
+        <div ng-app="teste" ng-controller="TesteCtrl" style="padding: 50px;">
+
+            <script id="teste/teste.html" type="text/ng-template">
+                {{ name }} - {{$index }}
+                <button class="btn btn-default" ng-click="del($row, $index)">Trash</button>
+            </script>
+
+            <div ng-show="dt_loading">carregando...</div>
+
+            <div datatable="optionsDt" processing-in="dt_loading" ng-init="col1 = 'name'; col2 = 'position'" class="ng-cloak">
+
+                <!--<p>Procurar: <input type="search" data-datatable-search data-for="'nomecoluna'" ng-model="dt_busca" /></p>-->
+                <p>Procurar: <input type="search" datatable-search ng-model="dt_busca" ng-model-options="{ debounce: 600 }" /></p>
+
+                <p>Por página:
+                    <input type="number" ng-model="dt_tamanho"/>
+                    <select datatable-length ng-model="dt_tamanho">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </p>
+
+                <div datatable-pagination in="pages" watch="dt_page">
+                    Página:
+                    <div>
+                        <span ng-repeat="page in pages track by page.index" class="btn-animate">
+                            <button type="button" ng-click="setPage(page.index)" class="btn btn-default" ng-class="{ active: page.active }">
+                                {{ page.number }}</button>
+                        </span>
+                    </div>
+                </div>
+
+                <div datatable-info in="dt_info">
+                    Mostrando {{ dt_info.start }} até {{ dt_info.end }} de {{ dt_info.displayed }}
+                    <span ng-show="dt_info.total != dt_info.displayed">(filtrado de {{dt_info.total}})</span>
+                </div>
+
+                <div>
+                    <input ng-model="col1" ng-model-options="{updateOn:'blur'}"/>
+                    <input ng-model="col2" ng-model-options="{updateOn:'blur'}"/>
+                    <input type='checkbox' ng-model='col3v' />
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Coluna 0</th>
+                            <th datatable-column
+                                name="{{col1}}"
+                                orderable="false">
+                                Coluna 1
+                                <input type="search" datatable-search ng-model="dt_busca_col" ng-model-options="{ debounce: 600 }" />
+                            </th>
+                            <th datatable-column="x"
+                                name="salary"
+                                template="teste/teste.html"
+                                visible="true"
+                                orderable="false">Coluna 3</th>
+                            <th data-datatable-column name="{{col2}}"
+                                orderable="{{col3v}}">Coluna 2</th>
+                        </tr>
+                    </thead>
+                </table>
+
+            </div>
+
+            <pre>
+Escolhidos: b:{{ dt_busca }}, t:{{ dt_tamanho }}
+            </pre>
+
+        </div>
+
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+        <!--<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.js"></script>-->
+        <script src="//cdn.datatables.net/1.10.0/js/jquery.dataTables.js"></script>
+        <script src="http://code.angularjs.org/1.3.0-beta.10/angular.js"></script>
+        <script src="http://code.angularjs.org/1.3.0-beta.10/angular-animate.min.js"></script>
+        <script src="http://code.angularjs.org/1.3.0-beta.10/angular-resource.min.js"></script>
+        <script src="src/js/broda-arraycache.js"></script>
+        <script src="src/js/broda-datatable.js"></script>
+        <script>
+
+            angular.module('teste', ['broda.datatable', 'ngAnimate', 'ngResource'])
+                .controller('TesteCtrl', [
+                        '$scope',
+                        function ($scope) {
+
+                            $scope.optionsDt = {
+                                rowTag: '<tr>',
+                                serverSide: true,
+                                ajax: 'ajax'
+                            };
+
+                            $scope.dt_page = 0;
+                            $scope.setPage = function(i) {
+                                $scope.dt_page = i;
+                            };
+                            $scope.del = function(row) {
+                                alert('você pediu por '+row.salary);
+                                console.log(row);
+                            }
+                        }
+                    ]);
+        </script>
+    </body>
+</html>

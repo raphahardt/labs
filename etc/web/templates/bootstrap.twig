@@ -1,0 +1,8 @@
+{#{ cssrewrite('src/js/*', {output:'js/*.js'}) }#}
+
+
+{#% javascripts 'web/src/js/*' %}
+    {{ app.request.basepath ~ '/assets/' ~ asset_url }}
+{% endjavascripts %#}
+
+{{ source('bootstrap.html') }}

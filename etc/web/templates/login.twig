@@ -1,0 +1,12 @@
+{# empty Twig template #}
+
+{#% javascripts '@jquery' output="jquery.js" debug=false filter='jsmin' %}
+    <script src="{{ asset_url }}"></script>
+{% endjavascripts %#}
+
+<form action="{{ path('auth') }}" method="post">
+    {{ error }}
+    <input type="text" name="_username" value="{{ last_username }}" />
+    <input type="password" name="_password" value="" />
+    <input type="submit" />
+</form>

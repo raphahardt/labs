@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="../bower_components/selectize/dist/css/selectize.bootstrap3.css">
+        <style>
+            .btn-animate.ng-move,
+            .btn-animate.ng-enter,
+            .btn-animate.ng-leave {
+                -webkit-transition:all ease 0.5s;
+                transition:all ease 0.5s;
+            }
+
+            .btn-animate.ng-leave.ng-leave-active,
+            .btn-animate.ng-move,
+            .btn-animate.ng-enter {
+                opacity:0;
+                -webkit-transform: scale(0.3);
+                transform: scale(0.3);
+            }
+
+            .btn-animate.ng-leave,
+            .btn-animate.ng-move.ng-move-active,
+            .btn-animate.ng-enter.ng-enter-active {
+                opacity:1;
+                -webkit-transform: scale(1);
+                transform: scale(1);
+            }
+
+            .selectize-control .selectize-dropdown > div {
+                border-bottom: 1px solid rgba(0,0,0,0.05);
+            }
+            .selectize-control .selectize-dropdown .by {
+                font-size: 11px;
+                opacity: 0.8;
+            }
+            .selectize-control .selectize-dropdown .by::before {
+                content: 'by ';
+            }
+            .selectize-control .selectize-dropdown .name {
+                font-weight: bold;
+                margin-right: 5px;
+            }
+            .selectize-control .selectize-dropdown .title {
+                display: block;
+            }
+            .selectize-control .selectize-dropdown .description {
+                font-size: 12px;
+                display: block;
+                color: #a0a0a0;
+                white-space: nowrap;
+                width: 100%;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .selectize-control .selectize-dropdown .meta {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                font-size: 10px;
+            }
+            .selectize-control .selectize-dropdown .meta li {
+                margin: 0;
+                padding: 0;
+                display: inline;
+                margin-right: 10px;
+            }
+            .selectize-control .selectize-dropdown .meta li span {
+                font-weight: bold;
+            }
+            .selectize-control::before {
+                -moz-transition: opacity 0.2s;
+                -webkit-transition: opacity 0.2s;
+                transition: opacity 0.2s;
+                content: ' ';
+                z-index: 2;
+                position: absolute;
+                display: block;
+                top: 12px;
+                right: 34px;
+                width: 16px;
+                height: 16px;
+                background: url(images/spinner.gif);
+                background-size: 16px 16px;
+                opacity: 0;
+            }
+            .selectize-control.loading::before {
+                opacity: 0.4;
+            }
+            .icon {
+                width: 16px;
+                height: 16px;
+                display: inline-block;
+                vertical-align: middle;
+                background-size: 16px 16px;
+                margin: 0 3px 0 0;
+            }
+            .icon.fork {
+                background-image: url(https://raw.githubusercontent.com/brianreavis/selectize.js/master/examples/images/repo-forked.png);
+            }
+            .icon.source {
+                background-image: url(https://raw.githubusercontent.com/brianreavis/selectize.js/master/examples/images/repo-source.png);
+            }
+        </style>
+    </head>
+    <body>
+
+        <div ng-app="teste" ng-controller="TesteCtrl" style="padding: 50px;">
+
+            <pre>model: {{ test | json }}</pre>
+            <select selectize='selectizeOptions' ng-model="test" placeholder="Pick a repository..."></select>
+
+        </div>
+
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+        <script src="../bower_components/microplugin/src/microplugin.js"></script>
+        <script src="../bower_components/sifter/sifter.js"></script>
+        <script src="../bower_components/selectize/dist/js/selectize.js"></script>
+        <script src="http://code.angularjs.org/1.3.0-beta.13/angular.js"></script>
+        <script src="http://code.angularjs.org/1.3.0-beta.13/angular-animate.min.js"></script>
+        <script src="http://code.angularjs.org/1.3.0-beta.13/angular-resource.min.js"></script>
+        <script src="src/js/broda-selectize.js"></script>
+        <script>
+
+                angular.module('teste', ['broda.selectize', 'ngAnimate', 'ngResource'])
+                    .controller('TesteCtrl', [
+                        '$scope', '$resource',
+                        function($scope, $resource) {
+
+                            $scope.selectizeOptions = {
+                                valueField: 'url',
+                                maxItems: null,
+                                labelField: 'name',
+                                searchField: 'name',
+                                maxOptions: 4,
+                                options: [],
+                                create: function(input) {
+                                    console.log('input',input);
+                                    return {
+                                        name: input,
+                                        username: 'user',
+                                        watchers: 0,
+                                        forks: 0
+                                    };
+                                },/**/
+                                score: function(search) {
+                                    var score = this.getScoreFunction(search);
+                                    return function(item) {
+                                        return score(item) * (1 + Math.max(item.watchers / 100, 1));
+                                    };
+                                },
+                                render: {
+                                    option_create: '<div class="create">Adicionar <b>{{input}}</b>...</div>',
+                                    option: '<div>' +
+                                        '<span class="title">' +
+                                        '<span class="name"><i class="icon" ng-class="{ \'fork\': fork, \'source\': !fork }"></i>{{name}}</span>' +
+                                        '<span class="by">{{username}}</span>' +
+                                        '</span>' +
+                                        '<span class="description">{{description}}</span>' +
+                                        '<ul class="meta">' +
+                                        '<li class="language" ng-show="!!language">{{language}}</li>' +
+                                        '<li class="watchers"><span>{{watchers}}</span> watchers</li>' +
+                                        '<li class="forks"><span>{{forks}}</span> forks</li>' +
+                                        '</ul>' +
+                                        '</div>'
+                                },
+                                load: 'https://api.github.com/legacy/repos/search/%QUERY'
+                            };
+
+                        }
+                    ]);
+        </script>
+    </body>
+</html>
