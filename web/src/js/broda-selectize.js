@@ -54,6 +54,9 @@ function SelectizeProvider() {
             'optgroup_header',
             'optgroup'
           ], function(val) {
+            if (!optsCopy.render) {
+              return;
+            }
             var fn = optsCopy.render[val];
             if (angular.isString(fn)) {
               optsCopy.render[val] = (function(template) {
@@ -81,26 +84,28 @@ function SelectizeProvider() {
           });
 
           // normalize load
-          if (angular.isString(optsCopy.load)) {
-            optsCopy.load = angular.extend(datasetDefaults, { url: optsCopy.load });
-          }
-          if (optsCopy.load.url) {
-            var url = optsCopy.load.url,
-                wildcard = optsCopy.load.wildcard,
-                method = optsCopy.load.method || 'GET';
-            optsCopy.load = function(query, cb) {
-              if (!query.length) return cb();
-              $.ajax({
-                url: url.replace(wildcard, encodeURIComponent(query)),
-                type: method,
-                error: function() {
-                  cb();
-                },
-                success: function(res) {
-                  cb(res.repositories.slice(0, 10));
-                }
-              });
-            };
+          if (optsCopy.load) {
+            if (angular.isString(optsCopy.load)) {
+              optsCopy.load = angular.extend(datasetDefaults, { url: optsCopy.load });
+            }
+            if (optsCopy.load.url) {
+              var url = optsCopy.load.url,
+                  wildcard = optsCopy.load.wildcard,
+                  method = optsCopy.load.method || 'GET';
+              optsCopy.load = function(query, cb) {
+                if (!query.length) return cb();
+                $.ajax({
+                  url: url.replace(wildcard, encodeURIComponent(query)),
+                  type: method,
+                  error: function() {
+                    cb();
+                  },
+                  success: function(res) {
+                    cb(res.repositories.slice(0, 10));
+                  }
+                });
+              };
+            }
           }
 
           // normalize the options
@@ -127,16 +132,32 @@ var SelectizeDirective = [
       link: function(scope, element, attr, ctrl) {
 
         var settings = $selectize.makeSettings(scope.selectize);
-        console.info(settings);
-		var update = function(e) {
+        var api;
+        //console.info(settings);
+		/*var update = function(e) {
+          console.log('update', element.val());
           scope.$apply(function() {
             ctrl.$setViewValue(element.val());
           });
-        };
+        };*/
 
-		$(this).on('change', update);
+		//$(this).on('change', update);
 
-        element.selectize(settings);
+        ctrl.$formatters.push(function (fromModel) {
+          console.warn('formatter', fromModel);
+          //api.setValue(fromModel);
+          return fromModel;
+        });
+
+        api = element.selectize(settings)[0].selectize;
+
+        console.log('api', api);
+
+        /*scope.$watch(attr.ngModel, function (val) {
+          console.log('mudou para ', val);
+          api.setValue(val);
+        });*/
+
 
       }
     };

@@ -112,6 +112,8 @@
 
             <pre>model: {{ test | json }}</pre>
             <select selectize='selectizeOptions' ng-model="test" placeholder="Pick a repository..."></select>
+            <button ng-click='test = null'>limpar</button>
+            <button ng-click='test = ["aaa"]'>definir</button>
 
         </div>
 
@@ -137,7 +139,11 @@
                                 labelField: 'name',
                                 searchField: 'name',
                                 maxOptions: 4,
-                                options: [],
+                                options: [
+                                    {url: 'aaa', name: 'aaa'},
+                                    {url: 'abc', name: 'abc'},
+                                    {url: 'aaabcd', name: 'aaabcd'}
+                                ]/*,
                                 create: function(input) {
                                     console.log('input',input);
                                     return {
@@ -146,7 +152,7 @@
                                         watchers: 0,
                                         forks: 0
                                     };
-                                },/**/
+                                },
                                 score: function(search) {
                                     var score = this.getScoreFunction(search);
                                     return function(item) {
@@ -168,7 +174,7 @@
                                         '</ul>' +
                                         '</div>'
                                 },
-                                load: 'https://api.github.com/legacy/repos/search/%QUERY'
+                                load: 'https://api.github.com/legacy/repos/search/%QUERY'/**/
                             };
 
                         }
